@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administration — FREE SPIRIT</title>
+  <meta name="robots" content="noindex">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Design System Free Spirit -->
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" type="image/png" href="../assets/images/etoile-fs.png">
+</head>
+
+<body data-page="admin">
+
+  <div id="toastZone"></div>
+
+  <!-- ============ PORTE D'ACCÈS (MOT DE PASSE) ============ -->
+  <section class="admin-gate" id="adminGate">
+    <img class="bg-star" src="../assets/images/etoile-fs.png" alt="" style="top:-120px; left:-120px;">
+    <img class="bg-star" src="../assets/images/etoile-fs.png" alt="" style="bottom:-140px; right:-100px; animation-delay:2s;">
+    <div class="admin-gate-card">
+      <div class="text-center mb-4">
+        <img src="../assets/images/etoile-fs.png" alt="Free Spirit" width="58" height="58" class="mb-3">
+        <h1 class="font-display fw-black text-uppercase mb-1" style="font-weight:900; font-size:1.25rem; letter-spacing:.06em;">
+          FREE <span class="chrome-text">SPIRIT</span>
+        </h1>
+        <p class="text-secondary small text-uppercase" style="letter-spacing:.3em; font-size:.65rem;">Espace administrateur</p>
+      </div>
+      <form onsubmit="submitAdminPassword(event)">
+        <div class="mb-3">
+          <label class="form-label">Mot de passe</label>
+          <input type="password" class="form-control" id="adminPassword" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-fs w-100"><i class="bi bi-shield-lock me-2"></i>Débloquer le dashboard</button>
+      </form>
+      <div class="text-center mt-4">
+        <a href="index.html" class="footer-link" style="font-size:.72rem;"><i class="bi bi-arrow-left me-1"></i>Retour à la boutique</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DASHBOARD ADMIN ============ -->
+  <div class="admin-shell d-none" id="adminShell">
+    <div class="admin-topbar">
+      <div class="container d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <img src="../assets/images/etoile-fs.png" alt="" width="30" height="30">
+          <div>
+            <div class="font-display fw-bold text-uppercase" style="font-size:.85rem; letter-spacing:.1em;">FREE SPIRIT <span class="chrome-text">/ ADMIN</span></div>
+            <small class="text-secondary" style="font-size:.68rem;">Gestion catalogue & codes promo — synchronisé avec la boutique en temps réel</small>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="index.html" target="_blank" class="btn btn-ghost-fs" style="padding:.5rem 1rem; font-size:.7rem;"><i class="bi bi-shop me-1"></i>Voir la boutique</a>
+          <button class="btn btn-fs" onclick="adminLogout()" style="padding:.5rem 1rem; font-size:.7rem;"><i class="bi bi-box-arrow-right me-1"></i>Verrouiller</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="container py-4">
+      <!-- Statistiques -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-value chrome-text" id="statProducts">0</div><div class="stat-label">Produits au catalogue</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-value" id="statActivePromos">0</div><div class="stat-label">Codes promo actifs</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-value" id="statPromos">0</div><div class="stat-label">Codes promo total</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-value red-text" id="statOrders">0</div><div class="stat-label">Commandes reçues</div></div></div>
+      </div>
+
+      <!-- Onglets -->
+      <div class="d-flex flex-wrap gap-2 mb-4">
+        <button class="admin-tab-btn active" data-tab="products" onclick="setAdminTab('products')"><i class="bi bi-box-seam me-1"></i>Produits</button>
+        <button class="admin-tab-btn" data-tab="promos" onclick="setAdminTab('promos')"><i class="bi bi-tag me-1"></i>Codes promo</button>
+      </div>
+
+      <!-- ===== PANEL PRODUITS ===== -->
+      <div id="adminProductsPanel">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <h2 class="section-title fs-5 mb-0">Catalogue <span class="chrome-text">Produits</span></h2>
+          <button class="btn btn-fs" onclick="openProductForm()"><i class="bi bi-plus-lg me-1"></i>Ajouter un produit</button>
+        </div>
+        <div class="table-responsive" style="border:1px solid rgba(255,255,255,.1);">
+          <table class="admin-table">
+            <thead>
+              <tr><th>Visuel</th><th>Nom</th><th>Catégorie</th><th>Prix</th><th>Tailles</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="adminProductsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== PANEL PROMOS ===== -->
+      <div id="adminPromosPanel" class="d-none">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <h2 class="section-title fs-5 mb-0">Codes <span class="chrome-text">Promo</span></h2>
+          <button class="btn btn-fs" onclick="openPromoForm()"><i class="bi bi-plus-lg me-1"></i>Créer un code</button>
+        </div>
+        <div class="table-responsive" style="border:1px solid rgba(255,255,255,.1);">
+          <table class="admin-table">
+            <thead>
+              <tr><th>Code</th><th>Réduction</th><th>Statut</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="adminPromosBody"></tbody>
+          </table>
+        </div>
+        <p class="text-secondary small mt-3">
+          <i class="bi bi-info-circle me-1"></i>
+          Les codes actifs s'affichent instantanément sur la page d'accueil et sont appliqués dans le panier des clients.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FORMULAIRE PRODUIT (MODAL) ============ -->
+  <div class="modal fade" id="productModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content fs-dark">
+        <div class="modal-header border-0">
+          <h5 class="font-display fw-bold text-uppercase mb-0" style="font-size:.9rem; letter-spacing:.15em;" id="productFormTitle">Ajouter un produit</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form onsubmit="submitProductForm(event)">
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="form-label">Nom du produit *</label>
+                <input type="text" class="form-control" id="pfName" placeholder="CHROME STAR TEE" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Catégorie *</label>
+                <select class="form-select" id="pfCategory">
+                  <option value="tshirts">T-Shirts</option>
+                  <option value="pantalons">Pantalons</option>
+                  <option value="chaussures">Chaussures</option>
+                  <option value="ceintures">Ceintures</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Prix *</label>
+                <input type="number" class="form-control" id="pfPrice" placeholder="50" min="0" step="1" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Ancien prix (promo affichée)</label>
+                <input type="number" class="form-control" id="pfOldPrice" placeholder="70" min="0" step="1">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Tailles (séparées par des virgules)</label>
+                <input type="text" class="form-control" id="pfSizes" placeholder="S, M, L, XL">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Image du produit * <span class="fw-normal text-secondary">(par URL ou fichier local)</span></label>
+                <div class="row g-2">
+                  <div class="col-md-7">
+                    <input type="text" class="form-control" id="pfImage" list="assetList" placeholder="https://exemple.com/visuel.jpg" required>
+                    <datalist id="assetList">
+                      <option value="../assets/images/tee-sans-manches.jpg">T-shirt blanc sans manches</option>
+                      <option value="../assets/images/tee-noir.png">T-shirt noir étoile</option>
+                      <option value="../assets/images/pantalon-cargo.png">Cargo noir</option>
+                      <option value="../assets/images/sneakers-chrome.png">Sneakers chrome</option>
+                      <option value="../assets/images/ceinture-etoile.png">Ceinture étoile</option>
+                      <option value="../assets/images/logo-gothic.jpg">Logo gothique</option>
+                      <option value="../assets/images/manifeste.jpg">Manifeste</option>
+                    </datalist>
+                  </div>
+                  <div class="col-md-5">
+                    <input type="file" class="form-control" id="pfImageFile" accept="image/*">
+                    <div class="form-text">Fichier local : 2 Mo max, encodé et sauvegardé automatiquement.</div>
+                  </div>
+                </div>
+                <div class="pf-image-preview" id="pfImagePreviewWrap">
+                  <img id="pfImagePreview" alt="Aperçu de l'image produit">
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" id="pfDesc" rows="3" placeholder="Coton lourd 240gsm, coupe boxy..."></textarea>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-fs w-100 mt-4"><i class="bi bi-check-lg me-1"></i>Enregistrer le produit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FORMULAIRE PROMO (MODAL) ============ -->
+  <div class="modal fade" id="promoModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content fs-dark">
+        <div class="modal-header border-0">
+          <h5 class="font-display fw-bold text-uppercase mb-0" style="font-size:.9rem; letter-spacing:.15em;" id="promoFormTitle">Créer un code promo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form onsubmit="submitPromoForm(event)">
+            <div class="mb-3">
+              <label class="form-label">Code *</label>
+              <input type="text" class="form-control text-uppercase" id="prfCode" placeholder="STAYREAL" required>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Type de réduction *</label>
+                <select class="form-select" id="prfType">
+                  <option value="percent">Pourcentage (%)</option>
+                  <option value="fixed">Montant fixe (FCFA)</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Valeur *</label>
+                <input type="number" class="form-control" id="prfValue" placeholder="20" min="1" step="1" required>
+              </div>
+            </div>
+            <div class="form-check mb-4">
+              <input class="form-check-input" type="checkbox" id="prfActive" checked style="background-color:var(--rouge); border-color:var(--rouge);">
+              <label class="form-check-label small" for="prfActive">Code actif (visible et utilisable immédiatement sur la boutique)</label>
+            </div>
+            <button type="submit" class="btn btn-fs w-100"><i class="bi bi-check-lg me-1"></i>Enregistrer le code</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Logique Free Spirit -->
+  <script src="../js/script.js"></script>
+</body>
+</html>

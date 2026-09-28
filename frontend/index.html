@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FREE SPIRIT — L'essence du Streetwear Moderne</title>
+  <meta name="description" content="Free Spirit — streetwear haut de gamme. Au-delà des limites. Release your energy. T-shirts, pantalons, chaussures, ceintures.">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Fonts : Unbounded (display) + Inter (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Design System Free Spirit -->
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" type="image/png" href="../assets/images/etoile-fs.png">
+</head>
+
+<body data-page="shop">
+
+  <!-- Zone de notifications -->
+  <div id="toastZone"></div>
+
+  <!-- Bannière défilante haute -->
+  <div class="marquee marquee-dark position-fixed top-0 start-0 end-0" style="z-index:1050;">
+    <div class="marquee-track">
+      <span>Au-delà des limites</span><span class="star-sep">✦</span>
+      <span>Release your energy</span><span class="star-sep">✦</span>
+      <span>L'essence du Streetwear moderne</span><span class="star-sep">✦</span>
+      <span>SEXY AURA</span><span class="star-sep">✦</span>
+      <span>Stay real, keep it 100</span><span class="star-sep">✦</span>
+      <span>Au-delà des limites</span><span class="star-sep">✦</span>
+      <span>Release your energy</span><span class="star-sep">✦</span>
+      <span>L'essence du Streetwear moderne</span><span class="star-sep">✦</span>
+      <span>SEXY AURA</span><span class="star-sep">✦</span>
+      <span>Stay real, keep it 100</span><span class="star-sep">✦</span>
+    </div>
+  </div>
+
+  <!-- ============ NAVBAR ============ -->
+  <nav class="fs-navbar" id="mainNavbar">
+    <div class="container d-flex align-items-center justify-content-between">
+      <a href="#hero" class="d-flex align-items-center gap-2 text-decoration-none">
+        <img src="../assets/images/etoile-fs.png" alt="Free Spirit" width="34" height="34">
+        <span class="font-display fw-bold text-white" style="font-size:.95rem; letter-spacing:.12em;">FREE <span class="chrome-text">SPIRIT</span></span>
+      </a>
+
+      <div class="d-none d-lg-flex align-items-center">
+        <a class="nav-link" href="#collection">Collection</a>
+        <a class="nav-link" href="#apropos">Manifeste</a>
+        <a class="nav-link" href="#contact">Contact</a>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <button class="nav-icon-btn" id="accountBtn" title="Compte"><i class="bi bi-person"></i></button>
+        <button class="nav-icon-btn" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas" title="Panier">
+          <i class="bi bi-bag"></i>
+          <span class="cart-badge" id="cartBadge">0</span>
+        </button>
+        <button class="nav-icon-btn d-lg-none" data-bs-toggle="collapse" data-bs-target="#mobileMenu" aria-label="Menu"><i class="bi bi-list"></i></button>
+      </div>
+    </div>
+
+    <div class="collapse d-lg-none mobile-menu" id="mobileMenu">
+      <div class="container d-flex flex-column py-2">
+        <a class="nav-link" href="#hero" data-bs-toggle="collapse" data-bs-target="#mobileMenu">Accueil</a>
+        <a class="nav-link" href="#collection" data-bs-toggle="collapse" data-bs-target="#mobileMenu">Collection</a>
+        <a class="nav-link" href="#apropos" data-bs-toggle="collapse" data-bs-target="#mobileMenu">Manifeste</a>
+        <a class="nav-link" href="#contact" data-bs-toggle="collapse" data-bs-target="#mobileMenu">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============ HERO ============ -->
+  <header class="hero" id="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-glow-2"></div>
+    <img class="hero-logo-bg" src="../assets/images/logo-gothic.jpg" alt="">
+    <img class="hero-star" src="../assets/images/etoile-fs.png" alt="Étoile chromée Free Spirit">
+    <img class="hero-star-2" src="../assets/images/etoile-fs.png" alt="">
+
+    <div class="container position-relative" style="z-index:2;">
+      <div class="row">
+        <div class="col-lg-9">
+          <span class="label-tag mb-3 d-inline-flex reveal visible">L'essence du Streetwear moderne</span>
+          <h1 class="hero-title mb-4">
+            <span class="line"><span class="chrome-text">FREE</span></span>
+            <span class="line"><span class="outline-text">SPIRIT</span></span>
+          </h1>
+          <p class="hero-manifesto mb-4">
+            <b class="red">au-delà des limites.</b> — Release your energy.<br>
+            ambitious and talented which prsed <b class="red">SEXY AURA</b>,<br>
+            un rêve de devenir — <b>stay real, keep it 100</b>,<br>
+            turn unbeliever to believer.
+          </p>
+          <div class="d-flex flex-wrap gap-3">
+            <a href="#collection" class="btn btn-fs text-decoration-none d-inline-flex align-items-center"><i class="bi bi-stars me-2"></i>Explorer la collection</a>
+            <button class="btn btn-ghost-fs" id="heroWhatsApp"><i class="bi bi-whatsapp me-2"></i>Commander sur WhatsApp</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-hint">Scroll</div>
+  </header>
+
+  <!-- ============ MARQUEE ROUGE ============ -->
+  <div class="marquee-tilt-clip my-4">
+    <div class="marquee marquee-red">
+      <div class="marquee-track">
+        <span>Stay real</span><span>✦</span><span>Keep it 100</span><span>✦</span><span>Sexy Aura</span><span>✦</span><span>Au-delà des limites</span><span>✦</span><span>Turn unbeliever to believer</span><span>✦</span>
+        <span>Stay real</span><span>✦</span><span>Keep it 100</span><span>✦</span><span>Sexy Aura</span><span>✦</span><span>Au-delà des limites</span><span>✦</span><span>Turn unbeliever to believer</span><span>✦</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ COLLECTION ============ -->
+  <section class="py-5" id="collection">
+    <div class="container py-lg-4">
+      <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4 reveal">
+        <div>
+          <span class="label-tag mb-2 d-inline-flex">Collection</span>
+          <h2 class="section-title display-5">Pièces <span class="chrome-text">Signature</span></h2>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="filter-chip active" data-filter="all">Tous</button>
+          <button class="filter-chip" data-filter="tshirts">T-Shirts</button>
+          <button class="filter-chip" data-filter="pantalons">Pantalons</button>
+          <button class="filter-chip" data-filter="chaussures">Chaussures</button>
+          <button class="filter-chip" data-filter="ceintures">Ceintures</button>
+        </div>
+      </div>
+
+      <!-- Codes promo actifs (synchronisés avec l'admin) -->
+      <div class="promo-strip px-3 py-2 mb-4 d-none reveal visible" id="promoStrip"></div>
+
+      <div class="row g-2 g-sm-3 g-md-4" id="productGrid"><!-- Produits rendus par script.js --></div>
+    </div>
+  </section>
+
+  <!-- ============ MANIFESTE / À PROPOS ============ -->
+  <section class="py-5" id="apropos">
+    <div class="container py-lg-5">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-5 reveal">
+          <div class="about-wrap position-relative">
+            <div class="about-media">
+              <img src="../assets/images/manifeste.jpg" alt="Manifeste officiel Free Spirit">
+            </div>
+            <div class="about-frame"></div>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <span class="label-tag mb-3 d-inline-flex reveal">Manifeste officiel</span>
+          <div class="d-flex flex-column gap-2 reveal reveal-delay-1">
+            <div class="manifesto-line big"><span class="dot">✦</span><span class="chrome-text">au-delà des limites.</span></div>
+            <div class="manifesto-line"><span class="dot">✦</span><span>Release your energy</span></div>
+            <div class="manifesto-line"><span class="dot">✦</span><span>L'essence du Streetwear moderne</span></div>
+            <div class="manifesto-line"><span class="dot">✦</span><span>ambitious and talented which prsed <em class="red-text fst-normal">SEXY AURA</em></span></div>
+            <div class="manifesto-line"><span class="dot">✦</span><span>un rêve de devenir</span></div>
+            <div class="manifesto-line big"><span class="dot">✦</span><span>stay real, keep it 100</span></div>
+            <div class="manifesto-line"><span class="dot">✦</span><span>turn unbeliever to believer.</span></div>
+          </div>
+          <p class="text-secondary mt-4 small lh-lg reveal reveal-delay-2" style="max-width:560px;">
+            Chaque pièce Free Spirit est pensée comme une armure chromée : des matières lourdes,
+            des étoiles métalliques, des coupes qui libèrent le mouvement. Le dark luxury n'est pas
+            un style — c'est un état d'esprit.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER / CONTACT ============ -->
+  <footer class="fs-footer pt-5" id="contact">
+    <div class="container py-4">
+      <div class="footer-giant mb-5 reveal">
+        <span class="chrome-text">FREE</span> <span class="outline-text">SPIRIT</span>
+      </div>
+      <div class="row g-4 pb-4">
+        <div class="col-md-4">
+          <h6 class="font-display fw-bold text-uppercase mb-3" style="font-size:.8rem; letter-spacing:.2em;">Contact direct</h6>
+          <div class="d-flex flex-column gap-2">
+            <a id="contactWhatsApp" href="#" target="_blank" class="footer-link"><i class="bi bi-whatsapp me-2"></i>WhatsApp — réponse rapide</a>
+            <a href="tel:+22893838593" class="footer-link" id="phoneFooterLink"><i class="bi bi-telephone me-2"></i><span id="phoneLabel">+228 93 83 85 93</span></a>
+            <a href="mailto:contact@freespirit.prod" class="footer-link"><i class="bi bi-envelope me-2"></i>contact@freespirit.prod</a>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <h6 class="font-display fw-bold text-uppercase mb-3" style="font-size:.8rem; letter-spacing:.2em;">Navigation</h6>
+          <div class="d-flex flex-column gap-2">
+            <a href="#collection" class="footer-link">Collection</a>
+            <a href="#apropos" class="footer-link">Manifeste</a>
+            <a href="#hero" class="footer-link">Haut de page</a>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <h6 class="font-display fw-bold text-uppercase mb-3" style="font-size:.8rem; letter-spacing:.2em;">L'univers</h6>
+          <p class="text-secondary small lh-lg mb-0">
+            Dark luxury · Y2K · Brutalisme. Paiement à la livraison ou sur confirmation WhatsApp.
+            Livraison suivie partout. Stay real, keep it 100.
+          </p>
+        </div>
+      </div>
+      <hr class="divider-chrome">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 py-3">
+        <small class="text-secondary">© 2026 FREE SPIRIT PRODUCTION — Turn unbeliever to believer.</small>
+        <a href="admin.html" class="footer-link" style="font-size:.7rem;"><i class="bi bi-shield-lock me-1"></i>Espace administrateur</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============ BOUTONS FLOTTANTS ============ -->
+  <div class="float-actions">
+    <a class="float-btn phone" id="phoneFloat" href="tel:+22893838593" title="Appel direct"><i class="bi bi-telephone-fill"></i></a>
+    <a class="float-btn wa" id="waFloat" href="#" target="_blank" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>
+  </div>
+
+  <!-- ============ PANIER (OFFCANVAS) ============ -->
+  <div class="offcanvas offcanvas-end fs-dark" tabindex="-1" id="cartOffcanvas">
+    <div class="offcanvas-header border-bottom border-secondary-subtle">
+      <h5 class="font-display fw-bold text-uppercase mb-0" style="font-size:.9rem; letter-spacing:.15em;">Panier <span class="red-text">Free Spirit</span></h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column">
+      <div id="cartItems" class="flex-grow-1" style="overflow-y:auto;"></div>
+      <div class="pt-3">
+        <div class="input-group mb-2">
+          <input type="text" class="form-control text-uppercase" id="promoInput" placeholder="Code promo" style="border-radius:0;">
+          <button class="btn btn-outline-light text-uppercase" id="applyPromo" style="border-radius:0; font-size:.75rem; letter-spacing:.1em;">Appliquer</button>
+        </div>
+        <div id="promoFeedback" class="small mb-2" style="min-height:1.2em;"></div>
+        <div id="cartTotals" class="mb-3"></div>
+        <button class="btn btn-chrome w-100 mb-2" id="checkoutWhatsApp" onclick="checkoutCartViaWhatsApp()">
+          <i class="bi bi-whatsapp me-2"></i>Commander via WhatsApp
+        </button>
+        <button class="btn btn-link text-secondary w-100 text-decoration-none" onclick="clearCart()" style="font-size:.75rem; letter-spacing:.1em;">VIDER LE PANIER</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ APERÇU PRODUIT (MODAL) ============ -->
+  <div class="modal fade" id="quickViewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content fs-dark">
+        <div class="modal-header border-0 pb-0">
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body pt-0" id="quickViewBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ AUTH (MODAL) ============ -->
+  <div class="modal fade" id="authModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content fs-dark">
+        <div class="modal-header border-0">
+          <h5 class="font-display fw-bold text-uppercase mb-0" style="font-size:.9rem; letter-spacing:.15em;">Espace <span class="chrome-text">Client</span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex mb-4">
+            <div class="auth-tab active" data-tab="login">Connexion</div>
+            <div class="auth-tab" data-tab="register">Inscription</div>
+          </div>
+
+          <form id="authLoginForm">
+            <div class="mb-3">
+              <label class="form-label">Nom / Pseudo</label>
+              <input type="text" class="form-control" id="loginName" placeholder="Rider FS">
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" id="loginEmail" placeholder="rider@freespirit.prod">
+            </div>
+            <button type="submit" class="btn btn-fs w-100 mb-3">Se connecter</button>
+          </form>
+
+          <form id="authRegisterForm" class="d-none">
+            <div class="mb-3">
+              <label class="form-label">Nom / Pseudo</label>
+              <input type="text" class="form-control" id="registerName" placeholder="Rider FS">
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" id="registerEmail" placeholder="rider@freespirit.prod">
+            </div>
+            <button type="submit" class="btn btn-fs w-100 mb-3">Créer mon compte</button>
+          </form>
+
+          <div class="d-flex align-items-center gap-3 my-3">
+            <hr class="divider-chrome flex-grow-1"><small class="text-secondary">ou continuer avec</small><hr class="divider-chrome flex-grow-1">
+          </div>
+          <div class="d-grid gap-2">
+            <button class="btn-social" onclick="socialLogin('Google')">
+              <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.5 6.1 29.5 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.7-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.2-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C41 35.4 44 30.2 44 24c0-1.3-.1-2.7-.4-3.9z"/></svg>
+              Continuer avec Google
+            </button>
+            <button class="btn-social" onclick="socialLogin('Apple')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+              Continuer avec Apple
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ COMPTE / MES COMMANDES (MODAL) ============ -->
+  <div class="modal fade" id="accountModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content fs-dark">
+        <div class="modal-header border-0">
+          <h5 class="font-display fw-bold text-uppercase mb-0" style="font-size:.9rem; letter-spacing:.15em;">Mon <span class="chrome-text">Compte</span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <div class="font-display fw-bold" id="accountName">—</div>
+              <small class="text-secondary" id="accountEmail">—</small>
+            </div>
+            <button class="btn btn-ghost-fs" onclick="logout()" style="padding:.5rem 1rem; font-size:.7rem;">Déconnexion</button>
+          </div>
+          <h6 class="font-display fw-bold text-uppercase mt-4 mb-3" style="font-size:.75rem; letter-spacing:.2em;">Mes Commandes</h6>
+          <div id="ordersList" style="max-height:50vh; overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Logique Free Spirit -->
+  <script src="../js/script.js"></script>
+</body>
+</html>
