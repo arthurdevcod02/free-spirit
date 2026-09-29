@@ -1,7 +1,7 @@
 /* ============================================================
    FREE SPIRIT — Logique interactive
    Boutique (index.html) + Administration (admin.html)
-   Données partagées via localStorage
+   Données dans Supabase ; le panier reste sur l'appareil du visiteur
    ============================================================ */
 
 'use strict';
@@ -9,7 +9,10 @@
 /* ==================== CONFIGURATION ==================== */
 const CONFIG = {
   CURRENCY: 'FCFA',
-  ADMIN_PASSWORD: 'freespirit',        // <-- Mot de passe de l'espace admin
+  // Clé publique : elle ne donne accès qu'à ce que les politiques RLS de la
+  // base autorisent. La clé service_role, elle, ne doit jamais arriver ici.
+  SUPABASE_URL: 'https://msamsyotdkxwhwfutens.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zYW1zeW90ZGt4d2h3ZnV0ZW5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MzgzMzIsImV4cCI6MjEwNjIxNDMzMn0.FiiWF8yBmiuYTQ-MMaHi3S1IWR3mVXYDfJtYpplhA1Q',
 };
 
 // Infos de la boutique : modifiables par l'admin dans admin.html > onglet « Boutique »
@@ -25,8 +28,6 @@ const DEFAULT_SETTINGS = {
   facebook: '',
 };
 
-// Chemin des visuels par défaut, relatif aux pages (frontend/)
-const ASSET = '../assets/images/';
 const CATEGORIES = {
   tshirts: 'T-Shirts',
   pantalons: 'Pantalons',
@@ -35,6 +36,12 @@ const CATEGORIES = {
 };
 
 /* ==================== STOCKAGE ==================== */
+// Base de données : catalogue, promos, commandes, avis, vidéos, infos boutique.
+const sb = window.supabase
+  ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY)
+  : null;
+
+// localStorage ne garde que ce qui appartient à l'appareil du visiteur.
 const DB = {
   get(key, fallback) {
     try {
@@ -45,62 +52,14 @@ const DB = {
   set(key, value) { localStorage.setItem(key, JSON.stringify(value)); },
 };
 
-// v2 : données réinitialisées lors du passage des prix en FCFA
 const KEYS = {
-  products: 'fs_products_v2',
-  promos: 'fs_promos_v2',
   cart: 'fs_cart_v2',
-  orders: 'fs_orders_v2',
-  user: 'fs_user_v1',
-  settings: 'fs_settings_v1',
-  reviews: 'fs_reviews_v1',
-  reels: 'fs_reels_v1',
-  admin: 'fs_admin_unlocked',
+  customer: 'fs_customer_v1',
 };
 
 const uid = () => 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
 const escapeHtml = (str = '') => String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = n => `${Number(n).toLocaleString('fr-FR')} ${CONFIG.CURRENCY}`;
-
-/* ==================== DONNÉES PAR DÉFAUT ==================== */
-const DEFAULT_PRODUCTS = [
-  {
-    id: 'p-overtone', name: 'OVERTONE TEE', category: 'tshirts',
-    price: 25000, oldPrice: 30000, image: ASSET + 'tee-sans-manches.jpg',
-    sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    desc: "T-shirt sans manches blanc cassé, logo FREE SPIRIT chromé en métal liquide. Coupe boxy, coton lourd 240gsm. Ambitious and talented — SEXY AURA garantie.",
-  },
-  {
-    id: 'p-chromestar', name: 'CHROME STAR TEE', category: 'tshirts',
-    price: 28000, oldPrice: null, image: ASSET + 'tee-noir.png',
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    desc: "Tee noir oversize, étoile chromée liquide sérigraphiée sur la poitrine. L'essence du streetwear moderne. Stay real, keep it 100.",
-  },
-  {
-    id: 'p-limitless', name: 'LIMITLESS CARGO', category: 'pantalons',
-    price: 45000, oldPrice: 58000, image: ASSET + 'pantalon-cargo.png',
-    sizes: ['S', 'M', 'L', 'XL'],
-    desc: "Cargo noir multi-poches, hardware étoile chromé. Coupe ample, toile technique dense. Au-delà des limites.",
-  },
-  {
-    id: 'p-aura', name: 'AURA RUNNER', category: 'chaussures',
-    price: 65000, oldPrice: null, image: ASSET + 'sneakers-chrome.png',
-    sizes: ['40', '41', '42', '43', '44', '45'],
-    desc: "Sneakers chunky noir/chrome, empiècements métalliques liquides et étoile FS sur le flanc. Release your energy à chaque pas.",
-  },
-  {
-    id: 'p-meteor', name: 'METEOR BELT', category: 'ceintures',
-    price: 18000, oldPrice: null, image: ASSET + 'ceinture-etoile.png',
-    sizes: ['Unique'],
-    desc: "Ceinture cuir noir pleine fleur, boucle étoile FS en chrome poli miroir. La pièce qui turn unbeliever to believer.",
-  },
-];
-
-const DEFAULT_PROMOS = [
-  { id: 'promo-welcome', code: 'WELCOME10', type: 'percent', value: 10, active: true },
-  { id: 'promo-aura', code: 'AURA25', type: 'percent', value: 25, active: true },
-  { id: 'promo-real', code: 'STAYREAL', type: 'fixed', value: 5000, active: true },
-];
 
 /* ==================== ÉTAT GLOBAL ==================== */
 const state = {
@@ -108,7 +67,7 @@ const state = {
   promos: [],
   cart: [],
   orders: [],
-  user: null,
+  customer: { name: '', whatsapp: '' },  // identité saisie dans le panier, mémorisée sur l'appareil
   reviews: [],
   reels: [],
   settings: { ...DEFAULT_SETTINGS },
@@ -117,31 +76,111 @@ const state = {
   qv: { product: null, size: null, qty: 1 }, // quick view
 };
 
-const readSettings = () => ({ ...DEFAULT_SETTINGS, ...(DB.get(KEYS.settings, null) || {}) });
+/* ==================== COUCHE BASE DE DONNÉES ====================
+   Lecture publique pour le catalogue, les avis publiés, les vidéos et les
+   infos boutique. Écriture réservée au compte admin connecté (RLS), sauf
+   les commandes et les avis que le visiteur peut déposer. */
 
-function loadState() {
-  // Les produits sauvegardés avec l'ancien dossier "FREE SPIRIT/" sont migrés vers assets/images/
-  const migrateImage = img => String(img || '').replace(/^FREE%20SPIRIT\//, ASSET);
-  state.products = (DB.get(KEYS.products, null) || DEFAULT_PRODUCTS.slice()).map(p => ({ ...p, image: migrateImage(p.image) }));
-  state.promos = DB.get(KEYS.promos, null) || DEFAULT_PROMOS.slice();
-  state.cart = DB.get(KEYS.cart, []);
-  state.orders = DB.get(KEYS.orders, []);
-  state.user = DB.get(KEYS.user, null);
-  state.reviews = DB.get(KEYS.reviews, []);
-  state.reels = DB.get(KEYS.reels, []);
-  state.settings = readSettings();
-  if (!localStorage.getItem(KEYS.products)) DB.set(KEYS.products, state.products);
-  if (!localStorage.getItem(KEYS.promos)) DB.set(KEYS.promos, state.promos);
-  if (!localStorage.getItem(KEYS.settings)) DB.set(KEYS.settings, state.settings);
+async function fetchRows(table) {
+  if (!sb) throw new Error('Bibliothèque Supabase indisponible');
+  const { data, error } = await sb.from(table).select('*');
+  if (error) throw error;
+  return data || [];
 }
-const saveProducts = () => DB.set(KEYS.products, state.products);
-const savePromos = () => DB.set(KEYS.promos, state.promos);
+
+async function writeRow(table, row) {
+  const { error } = await sb.from(table).upsert(row);
+  if (error) throw error;
+}
+
+/* Le visiteur anonyme n'a qu'un droit d'insertion sur les avis et les
+   commandes : un upsert exigerait en plus un droit de modification qu'il
+   n'a pas, d'où l'insertion simple ici. */
+async function insertRow(table, row) {
+  const { error } = await sb.from(table).insert(row);
+  if (error) throw error;
+}
+
+async function deleteRow(table, id) {
+  const { error } = await sb.from(table).delete().eq('id', id);
+  if (error) throw error;
+}
+
+/* Le détail technique part dans la console : le vendeur n'a qu'à savoir
+   que l'enregistrement n'a pas abouti. */
+function dbFail(error, message) {
+  console.error('[FREE SPIRIT]', message, error);
+  toast(message);
+}
+
+// Le tri se fait ici plutôt que dans la requête : les listes sont courtes
+// et les colonnes de date sont en camelCase.
+const newest = (key = 'createdAt') => (a, b) => new Date(b[key]) - new Date(a[key]);
+const oldest = (key = 'createdAt') => (a, b) => new Date(a[key]) - new Date(b[key]);
+
+// Chaque écriture envoie la ligne entière : la base refuse une ligne partielle.
+const productRow = p => ({
+  id: p.id, name: p.name, category: p.category, price: Number(p.price),
+  oldPrice: p.oldPrice ? Number(p.oldPrice) : null, image: p.image || '',
+  sizes: p.sizes || [], desc: p.desc || '', stock: p.stock ?? null,
+  createdAt: p.createdAt || new Date().toISOString(),
+});
+const promoRow = p => ({
+  id: p.id, code: p.code, type: p.type, value: Number(p.value),
+  active: !!p.active, createdAt: p.createdAt || new Date().toISOString(),
+});
+const orderRow = o => ({
+  id: o.id, date: o.date, items: o.items, subtotal: o.subtotal, discount: o.discount,
+  promoCode: o.promoCode || null, total: o.total, customer: o.customer, whatsapp: o.whatsapp || '',
+});
+const reviewRow = r => ({
+  id: r.id, productId: r.productId, rating: Number(r.rating), author: r.author,
+  comment: r.comment || '', date: r.date || new Date().toISOString(),
+  status: r.status, verified: !!r.verified,
+});
+const reelRow = r => ({
+  id: r.id, title: r.title || '', video: r.video || '', poster: r.poster || '',
+  link: r.link || '', linkLabel: r.linkLabel || '',
+  createdAt: r.createdAt || new Date().toISOString(),
+});
+
+const SETTINGS_FIELDS = ['whatsapp', 'phone', 'email', 'address', 'mapsUrl', 'waProfile', 'tiktok', 'instagram', 'facebook'];
+const settingsRow = s => ({
+  id: 1,
+  ...Object.fromEntries(SETTINGS_FIELDS.map(k => [k, s[k] || ''])),
+  updatedAt: new Date().toISOString(),
+});
+
+async function loadState() {
+  state.cart = DB.get(KEYS.cart, []);
+  state.customer = { name: '', whatsapp: '', ...(DB.get(KEYS.customer, null) || {}) };
+  try {
+    const [products, promos, reviews, reels, settings] = await Promise.all([
+      fetchRows('products'), fetchRows('promos'), fetchRows('reviews'),
+      fetchRows('reels'), fetchRows('settings'),
+    ]);
+    state.products = products.sort(newest());
+    state.promos = promos.sort(newest());
+    state.reviews = reviews.sort(newest());
+    state.reels = reels.sort(oldest());
+    state.settings = { ...DEFAULT_SETTINGS, ...(settings[0] || {}) };
+  } catch (error) {
+    dbFail(error, 'Boutique indisponible : les articles ne peuvent pas être chargés. Vérifie ta connexion Internet.');
+  }
+}
+
+/* Les commandes ne sont lisibles que par le compte admin connecté. */
+async function loadOrders() {
+  try {
+    state.orders = (await fetchRows('orders')).sort(newest('date'));
+  } catch (error) {
+    state.orders = [];
+    dbFail(error, 'Liste des commandes indisponible');
+  }
+}
+
 const saveCart = () => DB.set(KEYS.cart, state.cart);
-const saveOrders = () => DB.set(KEYS.orders, state.orders);
-const saveUser = () => DB.set(KEYS.user, state.user);
-const saveSettings = () => DB.set(KEYS.settings, state.settings);
-const saveReviews = () => DB.set(KEYS.reviews, state.reviews);
-const saveReels = () => DB.set(KEYS.reels, state.reels);
+const saveCustomer = () => DB.set(KEYS.customer, state.customer);
 
 /* ==================== TOASTS ==================== */
 function toast(message, type = 'info') {
@@ -279,9 +318,10 @@ function buildOrderMessage(items, promo, totals, title) {
     lines.push(`Code promo ${promo.code} : -${fmt(totals.discount)}`);
   }
   lines.push(`*TOTAL : ${fmt(totals.total)}*`);
-  if (state.user) {
+  if (state.customer.name || state.customer.whatsapp) {
     lines.push('');
-    lines.push(`Client : ${state.user.name} (${state.user.email})`);
+    lines.push(`Client : ${state.customer.name || '—'}`);
+    if (state.customer.whatsapp) lines.push(`WhatsApp : ${state.customer.whatsapp}`);
   }
   lines.push('');
   lines.push('Free Spirit — au-delà des limites.');
@@ -308,6 +348,7 @@ function orderProductViaWhatsApp() {
 /* Commande du panier complet */
 function checkoutCartViaWhatsApp() {
   if (!state.cart.length) { toast('Votre panier est vide'); return; }
+  if (!validateCustomer()) return;
   const items = state.cart.map(i => {
     const p = state.products.find(pr => pr.id === i.id);
     return { ...i, name: p ? p.name : 'Produit', price: p ? p.price : 0 };
@@ -317,11 +358,14 @@ function checkoutCartViaWhatsApp() {
   const message = buildOrderMessage(items, state.promo, { subtotal, discount, total: subtotal - discount }, 'NOUVELLE COMMANDE');
   openWhatsApp(message);
   registerOrder(items, { subtotal, discount, total: subtotal - discount });
+  clearCartSilent();
   toast('Commande transmise sur WhatsApp — merci !', 'success');
 }
 
-function registerOrder(items, totals) {
-  const order = {
+/* La commande part d'abord sur WhatsApp : l'enregistrement en base ne doit
+   jamais bloquer le visiteur, d'où l'échec signalé sans interrompre. */
+async function registerOrder(items, totals) {
+  const order = orderRow({
     id: 'FS-' + Date.now().toString(36).toUpperCase(),
     date: new Date().toISOString(),
     items: items.map(i => ({ name: i.name, size: i.size, qty: i.qty, price: i.price })),
@@ -329,12 +373,17 @@ function registerOrder(items, totals) {
     discount: totals.discount,
     promoCode: state.promo ? state.promo.code : null,
     total: totals.total,
-    customer: state.user ? state.user.name : 'Invité',
-  };
+    customer: state.customer.name || 'Invité',
+    whatsapp: state.customer.whatsapp || '',
+  });
   state.orders.unshift(order);
-  saveOrders();
-  clearCartSilent();
-  renderOrders();
+  try {
+    await insertRow('orders', order);
+  } catch (error) {
+    dbFail(error, 'Commande transmise sur WhatsApp, mais absente du tableau de bord');
+  }
+  renderAdminOrders();
+  renderAdminStats();
 }
 
 function clearCartSilent() {
@@ -454,41 +503,35 @@ function renderCart() {
   if (checkoutBtn) checkoutBtn.disabled = !state.cart.length;
 }
 
-function renderAccount() {
-  const btn = document.getElementById('accountBtn');
-  if (!btn) return;
-  if (state.user) {
-    btn.innerHTML = `<span class="chrome-text font-display fw-bold">${escapeHtml(state.user.name.charAt(0).toUpperCase())}</span>`;
-    btn.title = `Compte : ${state.user.name}`;
-  } else {
-    btn.innerHTML = `<i class="bi bi-person"></i>`;
-    btn.title = 'Se connecter';
-  }
+/* ---------- IDENTITÉ DU CLIENT (nom + WhatsApp) ---------- */
+function readCustomer() {
+  state.customer = {
+    name: (document.getElementById('customerName')?.value || '').trim(),
+    whatsapp: (document.getElementById('customerWhatsapp')?.value || '').trim(),
+  };
+  saveCustomer();
 }
 
-function renderOrders() {
-  const zone = document.getElementById('ordersList');
-  if (!zone) return;
-  const orders = state.user ? state.orders : state.orders;
-  if (!orders.length) {
-    zone.innerHTML = `<div class="empty-state"><i class="bi bi-receipt"></i>Aucune commande pour le moment.</div>`;
-    return;
+function bindCustomerFields() {
+  const name = document.getElementById('customerName');
+  const whatsapp = document.getElementById('customerWhatsapp');
+  if (name) { name.value = state.customer.name || ''; name.addEventListener('input', readCustomer); }
+  if (whatsapp) { whatsapp.value = state.customer.whatsapp || ''; whatsapp.addEventListener('input', readCustomer); }
+}
+
+function validateCustomer() {
+  readCustomer();
+  if (!state.customer.name) {
+    toast('Indique ton nom pour commander');
+    document.getElementById('customerName')?.focus();
+    return false;
   }
-  zone.innerHTML = orders.map(o => `
-    <div class="order-card mb-3">
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div>
-          <span class="oc-id chrome-text">${escapeHtml(o.id)}</span>
-          <div class="oc-date mt-1">${new Date(o.date).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })} · ${escapeHtml(o.customer)}</div>
-        </div>
-        <div class="text-end">
-          <div class="font-display fw-bold">${fmt(o.total)}</div>
-          ${o.promoCode ? `<small class="red-text">Code ${escapeHtml(o.promoCode)} appliqué</small>` : ''}
-        </div>
-      </div>
-      <hr class="divider-chrome my-2">
-      <small class="text-secondary">${o.items.map(i => `${escapeHtml(i.name)} (T.${escapeHtml(i.size)}) ×${i.qty}`).join(' · ')}</small>
-    </div>`).join('');
+  if (!state.customer.whatsapp) {
+    toast('Indique ton numéro WhatsApp pour commander');
+    document.getElementById('customerWhatsapp')?.focus();
+    return false;
+  }
+  return true;
 }
 
 /* ==================== QUICK VIEW ==================== */
@@ -645,7 +688,7 @@ function paintStars(pickerId, inputId, n) {
 function pickStar(n) { paintStars('starPicker', 'reviewRating', n); }
 function pickAdminStar(n) { paintStars('arfStars', 'arfRating', n); }
 
-function submitReview(e) {
+async function submitReview(e) {
   e.preventDefault();
   const p = state.qv.product;
   if (!p) return;
@@ -658,11 +701,17 @@ function submitReview(e) {
   const alreadyKey = 'fs_reviewed_' + p.id;
   if (DB.get(alreadyKey, false)) { toast('Tu as déjà laissé un avis sur cette pièce'); return; }
 
-  state.reviews.unshift({
+  const review = reviewRow({
     id: uid(), productId: p.id, rating, author, comment,
     date: new Date().toISOString(), status: 'pending', verified: false,
   });
-  saveReviews();
+  try {
+    await insertRow('reviews', review);
+  } catch (error) {
+    dbFail(error, "Avis non envoyé. Vérifie ta connexion puis réessaie.");
+    return;
+  }
+  state.reviews.unshift(review);
   DB.set(alreadyKey, true);
   toggleReviewForm(null);
   const form = document.getElementById('reviewForm');
@@ -843,53 +892,14 @@ function updateReelCounter() {
   counter.textContent = `${idx + 1} / ${cards.length}`;
 }
 
-/* ==================== AUTH (SIMULÉE) ==================== */
-function switchAuthTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-  document.getElementById('authLoginForm').classList.toggle('d-none', tab !== 'login');
-  document.getElementById('authRegisterForm').classList.toggle('d-none', tab !== 'register');
-}
-
-function handleAuth(mode, e) {
-  e.preventDefault();
-  const name = document.getElementById(mode === 'login' ? 'loginName' : 'registerName')?.value.trim();
-  const email = document.getElementById(mode === 'login' ? 'loginEmail' : 'registerEmail')?.value.trim();
-  if (!name || !email) { toast('Remplis tous les champs'); return; }
-  state.user = { name, email };
-  saveUser();
-  renderAccount();
-  renderOrders();
-  bootstrap.Modal.getInstance(document.getElementById('authModal'))?.hide();
-  toast(`Bienvenue dans l'univers Free Spirit, ${name}`, 'success');
-}
-
-function socialLogin(provider) {
-  state.user = { name: provider + ' Rider', email: `rider@${provider.toLowerCase()}.com` };
-  saveUser();
-  renderAccount();
-  renderOrders();
-  bootstrap.Modal.getInstance(document.getElementById('authModal'))?.hide();
-  toast(`Connexion ${provider} simulée — bienvenue !`, 'success');
-}
-
-function logout() {
-  state.user = null;
-  saveUser();
-  renderAccount();
-  renderOrders();
-  bootstrap.Modal.getInstance(document.getElementById('accountModal'))?.hide();
-  toast('Déconnexion effectuée');
-}
-
 /* ==================== INIT BOUTIQUE ==================== */
-function initShop() {
-  loadState();
+async function initShop() {
+  await loadState();
 
   renderProducts();
   renderPromoStrip();
   renderCart();
-  renderAccount();
-  renderOrders();
+  bindCustomerFields();
   renderReels();
 
   const reelTrack = document.getElementById('reelTrack');
@@ -932,30 +942,6 @@ function initShop() {
   const heroWa = document.getElementById('heroWhatsApp');
   if (heroWa) heroWa.addEventListener('click', () => openWhatsApp('Bonjour FREE SPIRIT ! Je veux commander une pièce de la collection.'));
 
-  // Compte
-  const accountBtn = document.getElementById('accountBtn');
-  if (accountBtn) {
-    accountBtn.addEventListener('click', () => {
-      if (state.user) {
-        document.getElementById('accountName').textContent = state.user.name;
-        document.getElementById('accountEmail').textContent = state.user.email;
-        renderOrders();
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('accountModal')).show();
-      } else {
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('authModal')).show();
-      }
-    });
-  }
-
-  // Mise à jour en temps réel si l'admin modifie les données dans un autre onglet
-  window.addEventListener('storage', e => {
-    if (e.key === KEYS.products) { state.products = DB.get(KEYS.products, []); renderProducts(); renderCart(); }
-    if (e.key === KEYS.promos) { state.promos = DB.get(KEYS.promos, []); renderPromoStrip(); renderCart(); }
-    if (e.key === KEYS.settings) { state.settings = readSettings(); applyShopInfo(); }
-    if (e.key === KEYS.reviews) { state.reviews = DB.get(KEYS.reviews, []); renderProducts(); }
-    if (e.key === KEYS.reels) { state.reels = DB.get(KEYS.reels, []); renderReels(); }
-  });
-
   // Parallaxe légère des étoiles du hero
   const hero = document.getElementById('hero');
   if (hero) {
@@ -968,13 +954,6 @@ function initShop() {
       });
     });
   }
-
-  // Onglets auth au clic
-  document.querySelectorAll('.auth-tab').forEach(t => t.addEventListener('click', () => switchAuthTab(t.dataset.tab)));
-  const loginForm = document.getElementById('authLoginForm');
-  if (loginForm) loginForm.addEventListener('submit', e => handleAuth('login', e));
-  const registerForm = document.getElementById('authRegisterForm');
-  if (registerForm) registerForm.addEventListener('submit', e => handleAuth('register', e));
 
   observeReveals();
 }
@@ -1000,9 +979,9 @@ let editingProductId = null;
 let editingPromoId = null;
 let editingReelId = null;
 
-function initAdmin() {
-  loadState();
-  checkAdminGate();
+async function initAdmin() {
+  await loadState();
+  await checkAdminGate();
 
   const pfImage = document.getElementById('pfImage');
   if (pfImage) pfImage.addEventListener('input', updateProductImagePreview);
@@ -1023,35 +1002,61 @@ function initAdmin() {
   });
 }
 
-function checkAdminGate() {
-  const unlocked = sessionStorage.getItem(KEYS.admin) === '1';
+/* Connexion réelle : la session Supabase survit au rechargement de la page
+   et disparaît au clic sur « Verrouiller ». */
+async function checkAdminGate() {
+  const session = sb ? (await sb.auth.getSession()).data.session : null;
+  const unlocked = !!session;
   document.getElementById('adminGate').classList.toggle('d-none', unlocked);
   document.getElementById('adminShell').classList.toggle('d-none', !unlocked);
-  if (unlocked) renderAdmin();
+  const who = document.getElementById('adminWho');
+  if (who) who.innerHTML = unlocked
+    ? `<i class="bi bi-person-check me-1"></i>${escapeHtml(session.user.email)}`
+    : '';
+  if (!unlocked) return;
+  await loadOrders();
+  renderAdmin();
 }
 
-function submitAdminPassword(e) {
+async function submitAdminLogin(e) {
   e.preventDefault();
-  const input = document.getElementById('adminPassword');
-  if (input.value === CONFIG.ADMIN_PASSWORD) {
-    sessionStorage.setItem(KEYS.admin, '1');
-    input.value = '';
-    checkAdminGate();
-    toast('Accès administrateur débloqué', 'success');
-  } else {
-    toast('Mot de passe incorrect');
-    input.classList.add('is-invalid');
-    setTimeout(() => input.classList.remove('is-invalid'), 1500);
+  const emailInput = document.getElementById('adminEmail');
+  const passwordInput = document.getElementById('adminPassword');
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+  if (!email || !password) { toast('Email et mot de passe obligatoires'); return; }
+  if (!sb) { toast('Base de données injoignable. Recharge la page.'); return; }
+
+  const button = document.querySelector('#adminGate button[type="submit"]');
+  button.disabled = true;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  button.disabled = false;
+
+  if (error) {
+    console.error('[FREE SPIRIT] Connexion refusée', error);
+    toast(/invalid login credentials|email not confirmed/i.test(error.message)
+      ? 'Email ou mot de passe incorrect'
+      : 'Connexion impossible, réessaie dans un instant');
+    passwordInput.classList.add('is-invalid');
+    setTimeout(() => passwordInput.classList.remove('is-invalid'), 1500);
+    return;
   }
+  passwordInput.value = '';
+  toast('Accès administrateur débloqué', 'success');
+  await checkAdminGate();
 }
 
-function adminLogout() {
-  sessionStorage.removeItem(KEYS.admin);
-  checkAdminGate();
+async function adminLogout() {
+  const { error } = await sb.auth.signOut();
+  // Une session déjà expirée côté serveur ne doit pas bloquer la déconnexion.
+  if (error) await sb.auth.signOut({ scope: 'local' });
+  state.orders = [];
+  await checkAdminGate();
 }
 
 const ADMIN_PANELS = {
   products: 'adminProductsPanel',
+  orders: 'adminOrdersPanel',
   promos: 'adminPromosPanel',
   reviews: 'adminReviewsPanel',
   reels: 'adminReelsPanel',
@@ -1069,6 +1074,7 @@ function setAdminTab(tab) {
 function renderAdmin() {
   renderAdminStats();
   renderAdminProducts();
+  renderAdminOrders();
   renderAdminPromos();
   renderAdminReviews();
   renderAdminReels();
@@ -1089,10 +1095,9 @@ function renderAdminShop() {
   field('sfFacebook', state.settings.facebook);
 }
 
-function submitShopSettings(e) {
+async function submitShopSettings(e) {
   e.preventDefault();
   const value = id => (document.getElementById(id)?.value || '').trim();
-
   const whatsapp = digitsOnly(value('sfWhatsapp'));
   const phone = value('sfPhone');
   const email = value('sfEmail');
@@ -1115,7 +1120,7 @@ function submitShopSettings(e) {
     urls[key] = raw;
   }
 
-  state.settings = {
+  const next = {
     ...state.settings,
     whatsapp,
     phone,
@@ -1123,7 +1128,13 @@ function submitShopSettings(e) {
     address: value('sfAddress'),
     ...urls,
   };
-  saveSettings();
+  try {
+    await writeRow('settings', settingsRow(next));
+  } catch (error) {
+    dbFail(error, 'Informations non enregistrées');
+    return;
+  }
+  state.settings = next;
   renderAdminShop();
   applyShopInfo();
   toast('Informations de la boutique mises à jour', 'success');
@@ -1136,6 +1147,51 @@ function renderAdminStats() {
   if (el('statActivePromos')) el('statActivePromos').textContent = activePromos().length;
   if (el('statOrders')) el('statOrders').textContent = state.orders.length;
   if (el('statCatalogValue')) el('statCatalogValue').textContent = fmt(state.products.reduce((s, p) => s + Number(p.price), 0));
+}
+
+/* ---------- COMMANDES ---------- */
+function renderAdminOrders() {
+  const tbody = document.getElementById('adminOrdersBody');
+  if (!tbody) return;
+  if (!state.orders.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><i class="bi bi-receipt"></i>Aucune commande pour le moment.</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = state.orders.map(o => `
+    <tr>
+      <td>
+        <span class="t-name">${escapeHtml(o.id)}</span>
+        <br><small class="text-secondary">${new Date(o.date).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</small>
+      </td>
+      <td>
+        <span class="t-name">${escapeHtml(o.customer || 'Invité')}</span>
+        ${o.whatsapp ? `<br><small class="text-secondary"><i class="bi bi-whatsapp me-1"></i>${escapeHtml(o.whatsapp)}</small>` : '<br><small class="text-secondary">Numéro non renseigné</small>'}
+      </td>
+      <td><small class="text-secondary">${o.items.map(i => `${escapeHtml(i.name)} (T.${escapeHtml(i.size)}) ×${i.qty}`).join('<br>')}</small></td>
+      <td>
+        <span class="fw-bold">${fmt(o.total)}</span>
+        ${o.promoCode ? `<br><small class="red-text">Code ${escapeHtml(o.promoCode)}</small>` : ''}
+      </td>
+      <td class="text-nowrap">
+        <button class="icon-action danger" title="Supprimer" onclick="deleteOrder('${o.id}')"><i class="bi bi-trash3"></i></button>
+      </td>
+    </tr>`).join('');
+}
+
+async function deleteOrder(id) {
+  const o = state.orders.find(x => x.id === id);
+  if (!o) return;
+  if (!confirm(`Supprimer la commande ${o.id} ?`)) return;
+  try {
+    await deleteRow('orders', id);
+  } catch (error) {
+    dbFail(error, 'Commande non supprimée');
+    return;
+  }
+  state.orders = state.orders.filter(x => x.id !== id);
+  renderAdminOrders();
+  renderAdminStats();
+  toast(`Commande ${o.id} supprimée`);
 }
 
 /* ---------- CRUD PRODUITS ---------- */
@@ -1209,7 +1265,7 @@ function openProductForm(id = null) {
   bootstrap.Modal.getOrCreateInstance(document.getElementById('productModal')).show();
 }
 
-function submitProductForm(e) {
+async function submitProductForm(e) {
   e.preventDefault();
   const name = document.getElementById('pfName').value.trim();
   const category = document.getElementById('pfCategory').value;
@@ -1221,32 +1277,46 @@ function submitProductForm(e) {
 
   if (!name || !price || !image) { toast('Nom, prix et image sont obligatoires'); return; }
 
-  const data = {
+  const idx = editingProductId ? state.products.findIndex(p => p.id === editingProductId) : -1;
+  const previous = idx >= 0 ? state.products[idx] : null;
+  const row = productRow({
+    ...(previous || {}),
+    id: previous ? previous.id : uid(),
     name, category, price,
     oldPrice: oldPriceRaw ? Number(oldPriceRaw) : null,
     image, sizes: sizes.length ? sizes : ['Unique'], desc,
-  };
+  });
 
-  if (editingProductId) {
-    const idx = state.products.findIndex(p => p.id === editingProductId);
-    state.products[idx] = { ...state.products[idx], ...data };
+  try {
+    await writeRow('products', row);
+  } catch (error) {
+    dbFail(error, 'Produit non enregistré');
+    return;
+  }
+
+  if (previous) {
+    state.products[idx] = row;
     toast(`Produit "${name}" modifié`, 'success');
   } else {
-    state.products.unshift({ id: uid(), ...data });
+    state.products.unshift(row);
     toast(`Produit "${name}" ajouté à la boutique`, 'success');
   }
-  saveProducts();
   renderAdminProducts();
   renderAdminStats();
   bootstrap.Modal.getInstance(document.getElementById('productModal'))?.hide();
 }
 
-function deleteProduct(id) {
+async function deleteProduct(id) {
   const p = state.products.find(pr => pr.id === id);
   if (!p) return;
   if (!confirm(`Supprimer définitivement "${p.name}" ?`)) return;
+  try {
+    await deleteRow('products', id);
+  } catch (error) {
+    dbFail(error, 'Produit non supprimé');
+    return;
+  }
   state.products = state.products.filter(pr => pr.id !== id);
-  saveProducts();
   renderAdminProducts();
   renderAdminStats();
   toast(`Produit "${p.name}" supprimé`);
@@ -1284,7 +1354,7 @@ function openPromoForm(id = null) {
   bootstrap.Modal.getOrCreateInstance(document.getElementById('promoModal')).show();
 }
 
-function submitPromoForm(e) {
+async function submitPromoForm(e) {
   e.preventDefault();
   const code = document.getElementById('prfCode').value.trim().toUpperCase();
   const type = document.getElementById('prfType').value;
@@ -1295,36 +1365,57 @@ function submitPromoForm(e) {
   const duplicate = state.promos.find(p => p.code.toUpperCase() === code && p.id !== editingPromoId);
   if (duplicate) { toast('Ce code existe déjà'); return; }
 
-  if (editingPromoId) {
-    const idx = state.promos.findIndex(p => p.id === editingPromoId);
-    state.promos[idx] = { ...state.promos[idx], code, type, value, active };
+  const idx = editingPromoId ? state.promos.findIndex(p => p.id === editingPromoId) : -1;
+  const row = promoRow({ ...(idx >= 0 ? state.promos[idx] : {}), id: idx >= 0 ? editingPromoId : uid(), code, type, value, active });
+
+  try {
+    await writeRow('promos', row);
+  } catch (error) {
+    // La base est seule juge : deux appareils peuvent créer le même code.
+    if (error.code === '23505') toast('Ce code existe déjà');
+    else dbFail(error, 'Code promo non enregistré');
+    return;
+  }
+
+  if (idx >= 0) {
+    state.promos[idx] = row;
     toast(`Code "${code}" modifié`, 'success');
   } else {
-    state.promos.unshift({ id: uid(), code, type, value, active });
+    state.promos.unshift(row);
     toast(`Code "${code}" créé — visible sur la boutique`, 'success');
   }
-  savePromos();
   renderAdminPromos();
   renderAdminStats();
   bootstrap.Modal.getInstance(document.getElementById('promoModal'))?.hide();
 }
 
-function togglePromo(id) {
+async function togglePromo(id) {
   const p = state.promos.find(pr => pr.id === id);
   if (!p) return;
-  p.active = !p.active;
-  savePromos();
+  const next = { ...p, active: !p.active };
+  try {
+    await writeRow('promos', promoRow(next));
+  } catch (error) {
+    dbFail(error, 'Code promo non mis à jour');
+    return;
+  }
+  Object.assign(p, next);
   renderAdminPromos();
   renderAdminStats();
   toast(`Code "${p.code}" ${p.active ? 'activé' : 'désactivé'}`);
 }
 
-function deletePromo(id) {
+async function deletePromo(id) {
   const p = state.promos.find(pr => pr.id === id);
   if (!p) return;
   if (!confirm(`Supprimer le code "${p.code}" ?`)) return;
+  try {
+    await deleteRow('promos', id);
+  } catch (error) {
+    dbFail(error, 'Code promo non supprimé');
+    return;
+  }
   state.promos = state.promos.filter(pr => pr.id !== id);
-  savePromos();
   renderAdminPromos();
   renderAdminStats();
   toast(`Code "${p.code}" supprimé`);
@@ -1370,21 +1461,32 @@ function renderAdminReviews() {
   }).join('');
 }
 
-function toggleReview(id) {
+async function toggleReview(id) {
   const r = state.reviews.find(rv => rv.id === id);
   if (!r) return;
-  r.status = r.status === 'approved' ? 'pending' : 'approved';
-  saveReviews();
+  const next = { ...r, status: r.status === 'approved' ? 'pending' : 'approved' };
+  try {
+    await writeRow('reviews', reviewRow(next));
+  } catch (error) {
+    dbFail(error, 'Avis non mis à jour');
+    return;
+  }
+  Object.assign(r, next);
   renderAdminReviews();
   toast(`Avis de ${r.author} ${r.status === 'approved' ? 'publié' : 'retiré de la boutique'}`, r.status === 'approved' ? 'success' : undefined);
 }
 
-function deleteReview(id) {
+async function deleteReview(id) {
   const r = state.reviews.find(rv => rv.id === id);
   if (!r) return;
   if (!confirm(`Supprimer définitivement l'avis de "${r.author}" ?`)) return;
+  try {
+    await deleteRow('reviews', id);
+  } catch (error) {
+    dbFail(error, 'Avis non supprimé');
+    return;
+  }
   state.reviews = state.reviews.filter(rv => rv.id !== id);
-  saveReviews();
   renderAdminReviews();
   toast('Avis supprimé');
 }
@@ -1404,7 +1506,7 @@ function openReviewForm() {
   bootstrap.Modal.getOrCreateInstance(document.getElementById('reviewModal')).show();
 }
 
-function submitAdminReviewForm(e) {
+async function submitAdminReviewForm(e) {
   e.preventDefault();
   const productId = document.getElementById('arfProduct').value;
   const author = document.getElementById('arfAuthor').value.trim();
@@ -1414,13 +1516,19 @@ function submitAdminReviewForm(e) {
   if (!author) { toast('Nom du client obligatoire'); return; }
   if (rating < 1 || rating > 5) { toast('Choisis une note en étoiles'); return; }
 
-  state.reviews.unshift({
+  const row = reviewRow({
     id: uid(), productId, rating, author, comment,
     date: new Date().toISOString(),
     status: document.getElementById('arfPublish').checked ? 'approved' : 'pending',
     verified: document.getElementById('arfVerified').checked,
   });
-  saveReviews();
+  try {
+    await writeRow('reviews', row);
+  } catch (error) {
+    dbFail(error, 'Avis non enregistré');
+    return;
+  }
+  state.reviews.unshift(row);
   renderAdminReviews();
   bootstrap.Modal.getInstance(document.getElementById('reviewModal'))?.hide();
   toast(`Avis de ${author} enregistré`, 'success');
@@ -1502,7 +1610,7 @@ function isSafeMediaSrc(raw, allowDataImage) {
   return !/^[a-z][a-z0-9+.-]*:/i.test(raw) && !raw.startsWith('//');
 }
 
-function submitReelForm(e) {
+async function submitReelForm(e) {
   e.preventDefault();
   const value = id => (document.getElementById(id)?.value || '').trim();
   const title = value('rfTitle');
@@ -1517,25 +1625,37 @@ function submitReelForm(e) {
   if (link && !/^https?:\/\//i.test(link)) { toast('Le lien de redirection doit commencer par http:// ou https://'); return; }
 
   const previous = editingReelId ? state.reels.find(x => x.id === editingReelId) : null;
-  const data = { title, video, poster, link, linkLabel };
+  const row = reelRow({ ...(previous || {}), id: previous ? previous.id : uid(), title, video, poster, link, linkLabel });
+
+  try {
+    await writeRow('reels', row);
+  } catch (error) {
+    dbFail(error, 'Vidéo non enregistrée');
+    return;
+  }
+
   if (previous) {
-    Object.assign(previous, data);
+    Object.assign(previous, row);
     toast('Vidéo modifiée', 'success');
   } else {
-    state.reels.push({ id: uid(), ...data });
+    state.reels.push(row);
     toast('Vidéo ajoutée — visible en bas de la boutique', 'success');
   }
-  saveReels();
   renderAdminReels();
   bootstrap.Modal.getInstance(document.getElementById('reelModal'))?.hide();
 }
 
-function deleteReel(id) {
+async function deleteReel(id) {
   const r = state.reels.find(x => x.id === id);
   if (!r) return;
   if (!confirm(`Supprimer "${r.title || 'cette vidéo'}" ?`)) return;
+  try {
+    await deleteRow('reels', id);
+  } catch (error) {
+    dbFail(error, 'Vidéo non supprimée');
+    return;
+  }
   state.reels = state.reels.filter(x => x.id !== id);
-  saveReels();
   renderAdminReels();
   toast('Vidéo supprimée');
 }

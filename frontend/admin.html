@@ -35,10 +35,14 @@
         </h1>
         <p class="text-secondary small text-uppercase" style="letter-spacing:.3em; font-size:.65rem;">Espace administrateur</p>
       </div>
-      <form onsubmit="submitAdminPassword(event)">
+      <form onsubmit="submitAdminLogin(event)">
         <div class="mb-3">
-          <label class="form-label">Mot de passe</label>
-          <input type="password" class="form-control" id="adminPassword" placeholder="••••••••" autocomplete="current-password">
+          <label class="form-label" for="adminEmail">Email</label>
+          <input type="email" class="form-control" id="adminEmail" placeholder="admin@freespirit.com" autocomplete="username" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="adminPassword">Mot de passe</label>
+          <input type="password" class="form-control" id="adminPassword" placeholder="••••••••" autocomplete="current-password" required>
         </div>
         <button type="submit" class="btn btn-fs w-100"><i class="bi bi-shield-lock me-2"></i>Débloquer le dashboard</button>
       </form>
@@ -56,10 +60,11 @@
           <img src="../assets/images/etoile-fs.png" alt="" width="30" height="30">
           <div>
             <div class="font-display fw-bold text-uppercase" style="font-size:.85rem; letter-spacing:.1em;">FREE SPIRIT <span class="chrome-text">/ ADMIN</span></div>
-            <small class="text-secondary" style="font-size:.68rem;">Gestion catalogue & codes promo — synchronisé avec la boutique en temps réel</small>
+            <small class="text-secondary" style="font-size:.68rem;">Catalogue, promos et commandes — enregistrés dans la base de la boutique</small>
           </div>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 align-items-center">
+          <span id="adminWho" class="text-secondary" style="font-size:.7rem;"></span>
           <a href="index.html" target="_blank" class="btn btn-ghost-fs" style="padding:.5rem 1rem; font-size:.7rem;"><i class="bi bi-shop me-1"></i>Voir la boutique</a>
           <button class="btn btn-fs" onclick="adminLogout()" style="padding:.5rem 1rem; font-size:.7rem;"><i class="bi bi-box-arrow-right me-1"></i>Verrouiller</button>
         </div>
@@ -78,6 +83,7 @@
       <!-- Onglets -->
       <div class="d-flex flex-wrap gap-2 mb-4">
         <button class="admin-tab-btn active" data-tab="products" onclick="setAdminTab('products')"><i class="bi bi-box-seam me-1"></i>Produits</button>
+        <button class="admin-tab-btn" data-tab="orders" onclick="setAdminTab('orders')"><i class="bi bi-receipt me-1"></i>Commandes</button>
         <button class="admin-tab-btn" data-tab="promos" onclick="setAdminTab('promos')"><i class="bi bi-tag me-1"></i>Codes promo</button>
         <button class="admin-tab-btn" data-tab="reviews" onclick="setAdminTab('reviews')"><i class="bi bi-star me-1"></i>Avis<span class="tab-badge d-none" id="tabBadgeReviews">0</span></button>
         <button class="admin-tab-btn" data-tab="reels" onclick="setAdminTab('reels')"><i class="bi bi-camera-reels me-1"></i>Vidéos</button>
@@ -98,6 +104,27 @@
             <tbody id="adminProductsBody"></tbody>
           </table>
         </div>
+      </div>
+
+      <!-- ===== PANEL COMMANDES ===== -->
+      <div id="adminOrdersPanel" class="d-none">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <h2 class="section-title fs-5 mb-0">Commandes <span class="chrome-text">reçues</span></h2>
+        </div>
+        <div class="table-responsive" style="border:1px solid rgba(255,255,255,.1);">
+          <table class="admin-table">
+            <thead>
+              <tr><th>Référence</th><th>Client</th><th>Articles</th><th>Total</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="adminOrdersBody"></tbody>
+          </table>
+        </div>
+        <p class="text-secondary small mt-3">
+          <i class="bi bi-info-circle me-1"></i>
+          Chaque commande part directement sur ton WhatsApp : c'est là que tu t'entends avec le client sur
+          la livraison et le paiement. Cette liste te sert d'historique, avec le nom et le numéro laissés
+          dans le panier.
+        </p>
       </div>
 
       <!-- ===== PANEL PROMOS ===== -->
@@ -465,6 +492,8 @@
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Base de données Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
   <!-- Logique Free Spirit -->
   <script src="../js/script.js"></script>
 </body>
