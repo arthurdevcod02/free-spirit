@@ -257,6 +257,16 @@ function clearCart() {
 const WA_INTRO = "Bonjour FREE SPIRIT ! J'aimerais des informations sur vos pièces.";
 
 const digitsOnly = value => String(value || '').replace(/\D/g, '');
+
+/* Un lien affiché sur le site doit rester inoffensif même si la base contient
+   une valeur inattendue : seuls http(s), tel:, mailto: et les chemins relatifs
+   passent ; tout autre schéma (javascript:, data:…) devient '#'. */
+const safeHref = raw => {
+  const url = String(raw || '').trim();
+  if (!url) return '#';
+  if (/^(https?:|tel:|mailto:)/i.test(url)) return url;
+  return /^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith('//') ? '#' : url;
+};
 const telHref = () => {
   const n = digitsOnly(state.settings.phone);
   return n ? `tel:+${n}` : '#';
@@ -283,7 +293,7 @@ function applyShopInfo() {
   link('phoneFooterLink', telHref());
   link('emailFooterLink', s.email ? `mailto:${s.email}` : '#');
   link('mapsFooterLink', mapsHref());
-  link('contactWhatsApp', s.waProfile || waHref(WA_INTRO));
+  link('contactWhatsApp', s.waProfile ? safeHref(s.waProfile) : waHref(WA_INTRO));
 
   text('phoneLabel', s.phone || 'Numéro à définir');
   text('emailLabel', s.email || 'Email à définir');
@@ -293,7 +303,7 @@ function applyShopInfo() {
   [['linkTiktok', s.tiktok], ['linkInstagram', s.instagram], ['linkFacebook', s.facebook]].forEach(([id, url]) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.href = url || '#';
+    el.href = safeHref(url);
     el.classList.toggle('d-none', !url);
   });
 }
@@ -741,7 +751,7 @@ function reelCardHTML(r) {
       ${video ? '<button type="button" class="reel-play" aria-label="Lire la vidéo"><i class="bi bi-play-fill"></i></button>' : ''}
       <figcaption class="reel-caption">
         ${r.title ? `<span class="reel-title">${escapeHtml(r.title)}</span>` : ''}
-        ${r.link ? `<a class="reel-link" href="${escapeHtml(r.link)}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-1"></i>${escapeHtml(r.linkLabel || 'Voir la vidéo')}</a>` : ''}
+        ${r.link ? `<a class="reel-link" href="${escapeHtml(safeHref(r.link))}" target="_blank" rel="noopener noreferrer"><i class="bi bi-box-arrow-up-right me-1"></i>${escapeHtml(r.linkLabel || 'Voir la vidéo')}</a>` : ''}
       </figcaption>
       ${video ? '<button type="button" class="reel-sound" aria-label="Activer le son"><i class="bi bi-volume-mute"></i></button>' : ''}
     </figure>`;
