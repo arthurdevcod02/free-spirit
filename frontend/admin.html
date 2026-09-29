@@ -79,6 +79,8 @@
       <div class="d-flex flex-wrap gap-2 mb-4">
         <button class="admin-tab-btn active" data-tab="products" onclick="setAdminTab('products')"><i class="bi bi-box-seam me-1"></i>Produits</button>
         <button class="admin-tab-btn" data-tab="promos" onclick="setAdminTab('promos')"><i class="bi bi-tag me-1"></i>Codes promo</button>
+        <button class="admin-tab-btn" data-tab="reviews" onclick="setAdminTab('reviews')"><i class="bi bi-star me-1"></i>Avis<span class="tab-badge d-none" id="tabBadgeReviews">0</span></button>
+        <button class="admin-tab-btn" data-tab="reels" onclick="setAdminTab('reels')"><i class="bi bi-camera-reels me-1"></i>Vidéos</button>
         <button class="admin-tab-btn" data-tab="shop" onclick="setAdminTab('shop')"><i class="bi bi-shop me-1"></i>Boutique</button>
       </div>
 
@@ -115,6 +117,53 @@
         <p class="text-secondary small mt-3">
           <i class="bi bi-info-circle me-1"></i>
           Les codes actifs s'affichent instantanément sur la page d'accueil et sont appliqués dans le panier des clients.
+        </p>
+      </div>
+
+      <!-- ===== PANEL AVIS CLIENTS ===== -->
+      <div id="adminReviewsPanel" class="d-none">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <h2 class="section-title fs-5 mb-0">Avis <span class="chrome-text">clients</span></h2>
+          <button class="btn btn-fs" onclick="openReviewForm()"><i class="bi bi-plus-lg me-1"></i>Ajouter un avis</button>
+        </div>
+        <div class="table-responsive" style="border:1px solid rgba(255,255,255,.1);">
+          <table class="admin-table">
+            <thead>
+              <tr><th>Client &amp; note</th><th>Produit</th><th>Commentaire</th><th>Statut</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="adminReviewsBody"></tbody>
+          </table>
+        </div>
+        <p class="text-secondary small mt-3">
+          <i class="bi bi-info-circle me-1"></i>
+          Un avis envoyé depuis la boutique reste <b>en attente</b> jusqu'à ta validation : rien ne s'affiche
+          sur les fiches produits tant que tu ne l'as pas publié. La note moyenne en étoiles se recalcule toute seule.
+        </p>
+      </div>
+
+      <!-- ===== PANEL VIDÉOS 9:16 ===== -->
+      <div id="adminReelsPanel" class="d-none">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <h2 class="section-title fs-5 mb-0">Vidéos <span class="chrome-text">9:16</span></h2>
+          <button class="btn btn-fs" onclick="openReelForm()"><i class="bi bi-plus-lg me-1"></i>Ajouter une vidéo</button>
+        </div>
+        <div class="table-responsive" style="border:1px solid rgba(255,255,255,.1);">
+          <table class="admin-table">
+            <thead>
+              <tr><th>Visuel</th><th>Titre</th><th>Redirection</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="adminReelsBody"></tbody>
+          </table>
+        </div>
+        <p class="text-secondary small mt-3">
+          <i class="bi bi-info-circle me-1"></i>
+          Ces cartes verticales s'affichent tout en bas de la boutique et se feuillettent du doigt.
+          La vidéo doit être hébergée quelque part (URL directe en <code>.mp4</code>, ou ton lien TikTok / Instagram
+          dans « Redirige vers »). Tant qu'aucune vidéo n'est enregistrée, la section reste masquée.<br>
+          <i class="bi bi-cursor me-1"></i>
+          Si tu renseignes <b>à la fois</b> une vidéo et un visuel, le visuel sert de bannière :
+          au survol sur ordinateur il s'efface et laisse jouer un extrait de la vidéo.
+          Sur téléphone, la vidéo se lance toute seule dès que la carte est à l'écran.
         </p>
       </div>
 
@@ -285,6 +334,109 @@
               <label class="form-check-label small" for="prfActive">Code actif (visible et utilisable immédiatement sur la boutique)</label>
             </div>
             <button type="submit" class="btn btn-fs w-100"><i class="bi bi-check-lg me-1"></i>Enregistrer le code</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FORMULAIRE AVIS (MODAL) ============ -->
+  <div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content fs-dark">
+        <div class="modal-header border-0">
+          <h5 class="font-display fw-bold text-uppercase mb-0" style="font-size:.9rem; letter-spacing:.15em;">Ajouter un avis client</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form onsubmit="submitAdminReviewForm(event)">
+            <div class="mb-3">
+              <label class="form-label" for="arfProduct">Produit *</label>
+              <select class="form-select" id="arfProduct"></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="arfAuthor">Nom du client *</label>
+              <input type="text" class="form-control" id="arfAuthor" placeholder="Kossi" maxlength="40" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Note *</label>
+              <div class="star-picker" id="arfStars">
+                <button type="button" class="star-btn" onclick="pickAdminStar(1)" aria-label="1 étoile"><i class="bi bi-star"></i></button>
+                <button type="button" class="star-btn" onclick="pickAdminStar(2)" aria-label="2 étoiles"><i class="bi bi-star"></i></button>
+                <button type="button" class="star-btn" onclick="pickAdminStar(3)" aria-label="3 étoiles"><i class="bi bi-star"></i></button>
+                <button type="button" class="star-btn" onclick="pickAdminStar(4)" aria-label="4 étoiles"><i class="bi bi-star"></i></button>
+                <button type="button" class="star-btn" onclick="pickAdminStar(5)" aria-label="5 étoiles"><i class="bi bi-star"></i></button>
+              </div>
+              <input type="hidden" id="arfRating" value="5">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="arfComment">Commentaire</label>
+              <textarea class="form-control" id="arfComment" rows="3" maxlength="400" placeholder="Coton lourd, coupe parfaite..."></textarea>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="arfVerified" checked>
+              <label class="form-check-label small" for="arfVerified">Achat vérifié</label>
+            </div>
+            <div class="form-check mb-4">
+              <input class="form-check-input" type="checkbox" id="arfPublish" checked>
+              <label class="form-check-label small" for="arfPublish">Publier immédiatement sur la boutique</label>
+            </div>
+            <button type="submit" class="btn btn-fs w-100"><i class="bi bi-check-lg me-1"></i>Enregistrer l'avis</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FORMULAIRE VIDÉO 9:16 (MODAL) ============ -->
+  <div class="modal fade" id="reelModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content fs-dark">
+        <div class="modal-header border-0">
+          <h5 class="font-display fw-bold text-uppercase mb-0" style="font-size:.9rem; letter-spacing:.15em;" id="reelFormTitle">Ajouter une vidéo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form onsubmit="submitReelForm(event)">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="rfTitle">Titre</label>
+                <input type="text" class="form-control" id="rfTitle" placeholder="Défilé Lomé — backstage" maxlength="60">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="rfVideo">URL de la vidéo <span class="fw-normal text-secondary">(.mp4 hébergé)</span></label>
+                <input type="text" class="form-control" id="rfVideo" placeholder="https://exemple.com/defile.mp4">
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="rfPoster">Visuel de couverture <span class="fw-normal text-secondary">(image verticale, affichée avant lecture)</span></label>
+                <div class="row g-2">
+                  <div class="col-md-7">
+                    <input type="text" class="form-control" id="rfPoster" placeholder="https://exemple.com/couverture.jpg">
+                  </div>
+                  <div class="col-md-5">
+                    <input type="file" class="form-control" id="rfPosterFile" accept="image/*">
+                    <div class="form-text">Fichier local : 2 Mo max.</div>
+                  </div>
+                </div>
+                <div class="pf-image-preview" id="rfPosterPreviewWrap">
+                  <img id="rfPosterPreview" alt="Aperçu du visuel">
+                </div>
+              </div>
+              <div class="col-md-8">
+                <label class="form-label" for="rfLink">Redirige vers <span class="fw-normal text-secondary">(TikTok, Instagram, YouTube...)</span></label>
+                <input type="text" class="form-control" id="rfLink" placeholder="https://www.tiktok.com/@freespirit/video/...">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="rfLinkLabel">Texte du bouton</label>
+                <input type="text" class="form-control" id="rfLinkLabel" placeholder="Voir sur TikTok" maxlength="30">
+              </div>
+            </div>
+            <p class="text-secondary small mt-3 mb-0">
+              <i class="bi bi-info-circle me-1"></i>
+              La vidéo se lance toute seule en muet quand elle est à l'écran. Sans URL de vidéo, la carte
+              affiche simplement le visuel de couverture.
+            </p>
+            <button type="submit" class="btn btn-fs w-100 mt-4"><i class="bi bi-check-lg me-1"></i>Enregistrer la vidéo</button>
           </form>
         </div>
       </div>

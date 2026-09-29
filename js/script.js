@@ -53,6 +53,8 @@ const KEYS = {
   orders: 'fs_orders_v2',
   user: 'fs_user_v1',
   settings: 'fs_settings_v1',
+  reviews: 'fs_reviews_v1',
+  reels: 'fs_reels_v1',
   admin: 'fs_admin_unlocked',
 };
 
@@ -107,6 +109,8 @@ const state = {
   cart: [],
   orders: [],
   user: null,
+  reviews: [],
+  reels: [],
   settings: { ...DEFAULT_SETTINGS },
   promo: null,        // code promo appliqué dans le panier
   filter: 'all',
@@ -123,6 +127,8 @@ function loadState() {
   state.cart = DB.get(KEYS.cart, []);
   state.orders = DB.get(KEYS.orders, []);
   state.user = DB.get(KEYS.user, null);
+  state.reviews = DB.get(KEYS.reviews, []);
+  state.reels = DB.get(KEYS.reels, []);
   state.settings = readSettings();
   if (!localStorage.getItem(KEYS.products)) DB.set(KEYS.products, state.products);
   if (!localStorage.getItem(KEYS.promos)) DB.set(KEYS.promos, state.promos);
@@ -134,6 +140,8 @@ const saveCart = () => DB.set(KEYS.cart, state.cart);
 const saveOrders = () => DB.set(KEYS.orders, state.orders);
 const saveUser = () => DB.set(KEYS.user, state.user);
 const saveSettings = () => DB.set(KEYS.settings, state.settings);
+const saveReviews = () => DB.set(KEYS.reviews, state.reviews);
+const saveReels = () => DB.set(KEYS.reels, state.reels);
 
 /* ==================== TOASTS ==================== */
 function toast(message, type = 'info') {
@@ -340,6 +348,7 @@ function clearCartSilent() {
 function productCardHTML(p) {
   const hasPromo = p.oldPrice && p.oldPrice > p.price;
   const discountPct = hasPromo ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
+  const r = ratingStats(p.id);
   return `
   <div class="col-6 col-md-4 reveal">
     <article class="product-card h-100" data-id="${p.id}" onclick="openQuickView('${p.id}')">
@@ -354,6 +363,7 @@ function productCardHTML(p) {
       <div class="pc-info">
         <div class="pc-cat">${CATEGORIES[p.category] || escapeHtml(p.category)}</div>
         <h3 class="pc-name">${escapeHtml(p.name)}</h3>
+        ${r.count ? `<div class="pc-rating">${starsHTML(r.avg)}<span class="pc-rating-count">(${r.count})</span></div>` : ''}
         <div class="pc-price">
           <span class="now ${hasPromo ? 'hot' : ''}">${fmt(p.price)}</span>
           ${hasPromo ? `<span class="old">${fmt(p.oldPrice)}</span>` : ''}
@@ -521,6 +531,7 @@ function openQuickView(id) {
           <button class="btn btn-fs" onclick="qvAddToCart()"><i class="bi bi-bag-plus me-2"></i>Ajouter au panier</button>
           <button class="btn btn-chrome" onclick="orderProductViaWhatsApp()"><i class="bi bi-whatsapp me-2"></i>Commander via WhatsApp</button>
         </div>
+        ${qvReviewsHTML(p)}
       </div>
     </div>`;
   bootstrap.Modal.getOrCreateInstance(document.getElementById('quickViewModal')).show();
@@ -546,6 +557,222 @@ function qvAddToCart() {
 function quickAdd(id) {
   const p = state.products.find(pr => pr.id === id);
   if (p) addToCart(id, p.sizes[0], 1);
+}
+
+/* ==================== AVIS CLIENTS ====================
+   Les visiteurs proposent un avis (statut « pending ») ; rien n'est publié
+   tant que l'admin ne l'a pas validé dans admin.html > onglet « Avis ». */
+const approvedReviews = productId => state.reviews
+  .filter(r => r.productId === productId && r.status === 'approved')
+  .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+function ratingStats(productId) {
+  const list = approvedReviews(productId);
+  if (!list.length) return { avg: 0, count: 0 };
+  return { avg: list.reduce((n, r) => n + r.rating, 0) / list.length, count: list.length };
+}
+
+/* Étoiles pleines / demi / vides selon la note */
+function starsHTML(rating) {
+  const n = Number(rating) || 0;
+  let out = '';
+  for (let i = 1; i <= 5; i++) {
+    out += `<i class="bi ${n >= i ? 'bi-star-fill' : (n >= i - 0.5 ? 'bi-star-half' : 'bi-star')}"></i>`;
+  }
+  return `<span class="stars" role="img" aria-label="${n.toFixed(1)} sur 5">${out}</span>`;
+}
+
+function reviewItemHTML(r) {
+  return `
+    <div class="review-item">
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <div>
+          <div class="review-author">${escapeHtml(r.author)}</div>
+          ${starsHTML(r.rating)}
+        </div>
+        <small class="text-secondary text-nowrap">${new Date(r.date).toLocaleDateString('fr-FR')}</small>
+      </div>
+      ${r.comment ? `<p class="review-comment">${escapeHtml(r.comment)}</p>` : ''}
+      ${r.verified ? '<small class="review-verified"><i class="bi bi-patch-check-fill me-1"></i>Achat vérifié</small>' : ''}
+    </div>`;
+}
+
+/* Bloc avis intégré à la fiche produit (quick view) */
+function qvReviewsHTML(p) {
+  const r = ratingStats(p.id);
+  const list = approvedReviews(p.id).slice(0, 3);
+  return `
+    <div class="qv-reviews">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="review-avg">${r.count ? r.avg.toFixed(1) : '—'}</span>
+        ${starsHTML(r.avg)}
+        <small class="text-secondary">${r.count ? `${r.count} avis client${r.count > 1 ? 's' : ''}` : 'Aucun avis pour le moment'}</small>
+      </div>
+      ${list.length ? `<div class="review-list">${list.map(reviewItemHTML).join('')}</div>` : ''}
+      <button type="button" class="btn-review-toggle" onclick="toggleReviewForm(this)"><i class="bi bi-star me-1"></i>Donner mon avis</button>
+      <form id="reviewForm" class="review-form d-none" onsubmit="submitReview(event)">
+        <div class="star-picker mb-2" id="starPicker">
+          ${[1, 2, 3, 4, 5].map(n => `<button type="button" class="star-btn" onclick="pickStar(${n})" aria-label="${n} étoile${n > 1 ? 's' : ''}"><i class="bi bi-star"></i></button>`).join('')}
+        </div>
+        <input type="hidden" id="reviewRating" value="0">
+        <input type="text" class="form-control form-control-sm mb-2" id="reviewAuthor" placeholder="Ton nom ou pseudo" maxlength="40" required>
+        <textarea class="form-control form-control-sm mb-2" id="reviewComment" rows="2" placeholder="Ton avis sur la pièce (optionnel)" maxlength="400"></textarea>
+        <button type="submit" class="btn btn-fs btn-sm w-100"><i class="bi bi-send me-1"></i>Envoyer mon avis</button>
+        <small class="review-note">Publié après validation de la boutique.</small>
+      </form>
+    </div>`;
+}
+
+function toggleReviewForm(btn) {
+  const form = document.getElementById('reviewForm');
+  if (!form) return;
+  const hidden = form.classList.toggle('d-none');
+  if (btn) btn.classList.toggle('d-none', !hidden);
+  if (!hidden) document.getElementById('reviewAuthor')?.focus();
+}
+
+/* Allume les étoiles jusqu'à la note choisie */
+function paintStars(pickerId, inputId, n) {
+  const field = document.getElementById(inputId);
+  if (field) field.value = n;
+  document.querySelectorAll(`#${pickerId} .star-btn`).forEach((b, i) => {
+    b.classList.toggle('on', i < n);
+    const icon = b.querySelector('i');
+    if (icon) icon.className = `bi ${i < n ? 'bi-star-fill' : 'bi-star'}`;
+  });
+}
+
+function pickStar(n) { paintStars('starPicker', 'reviewRating', n); }
+function pickAdminStar(n) { paintStars('arfStars', 'arfRating', n); }
+
+function submitReview(e) {
+  e.preventDefault();
+  const p = state.qv.product;
+  if (!p) return;
+  const rating = Number(document.getElementById('reviewRating')?.value || 0);
+  const author = (document.getElementById('reviewAuthor')?.value || '').trim();
+  const comment = (document.getElementById('reviewComment')?.value || '').trim();
+  if (rating < 1 || rating > 5) { toast('Choisis une note en étoiles'); return; }
+  if (!author) { toast('Indique ton nom ou ton pseudo'); return; }
+
+  const alreadyKey = 'fs_reviewed_' + p.id;
+  if (DB.get(alreadyKey, false)) { toast('Tu as déjà laissé un avis sur cette pièce'); return; }
+
+  state.reviews.unshift({
+    id: uid(), productId: p.id, rating, author, comment,
+    date: new Date().toISOString(), status: 'pending', verified: false,
+  });
+  saveReviews();
+  DB.set(alreadyKey, true);
+  toggleReviewForm(null);
+  const form = document.getElementById('reviewForm');
+  if (form) { form.reset(); pickStar(0); form.classList.add('d-none'); }
+  document.querySelectorAll('.btn-review-toggle').forEach(b => b.classList.remove('d-none'));
+  toast('Merci ! Ton avis sera publié après validation.', 'success');
+}
+
+/* ==================== VIDÉOS 9:16 (SHOWREEL) ====================
+   Une carte = un visuel vertical qui joue en muet, avec un bouton qui
+   renvoie vers la publication d'origine (TikTok, Instagram, YouTube).
+   Quand une vidéo ET un visuel existent, le visuel sert de bannière :
+   au survol (souris uniquement) il s'efface et laisse jouer un extrait. */
+function reelCardHTML(r) {
+  const video = !!r.video;
+  const preview = video && !!r.poster;
+  const media = video
+    ? `<video src="${escapeHtml(r.video)}"${r.poster ? ` poster="${escapeHtml(r.poster)}"` : ''} muted loop playsinline preload="metadata"></video>${
+        preview ? `<img class="reel-still" src="${escapeHtml(r.poster)}" alt="${escapeHtml(r.title || '')}" loading="lazy">` : ''
+      }`
+    : `<img src="${escapeHtml(r.poster || '')}" alt="${escapeHtml(r.title || '')}" loading="lazy">`;
+  return `
+    <figure class="reel-card${preview ? ' has-preview' : ''}" data-reel="${escapeHtml(r.id)}">
+      <div class="reel-media">${media}</div>
+      ${preview ? '<span class="reel-hint" aria-hidden="true"><i class="bi bi-play-fill"></i></span>' : ''}
+      <figcaption class="reel-caption">
+        ${r.title ? `<span class="reel-title">${escapeHtml(r.title)}</span>` : ''}
+        ${r.link ? `<a class="reel-link" href="${escapeHtml(r.link)}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-1"></i>${escapeHtml(r.linkLabel || 'Voir la vidéo')}</a>` : ''}
+      </figcaption>
+      ${video ? `<button type="button" class="reel-sound" onclick="toggleReelSound('${escapeHtml(r.id)}', this)" aria-label="Activer le son"><i class="bi bi-volume-mute"></i></button>` : ''}
+    </figure>`;
+}
+
+function renderReels() {
+  const section = document.getElementById('showreel');
+  const track = document.getElementById('reelTrack');
+  if (!section || !track) return;
+  const list = state.reels.filter(r => r.video || r.poster);
+  if (!list.length) { track.innerHTML = ''; section.classList.add('d-none'); return; }
+  section.classList.remove('d-none');
+  track.innerHTML = list.map(reelCardHTML).join('');
+  updateReelCounter();
+  observeReels();
+}
+
+/* Seule la carte visible joue : les autres sont mises en pause pour
+   économiser la batterie et le forfait data du visiteur. */
+let reelObserver = null;
+const hasHover = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+function observeReels() {
+  if (reelObserver) reelObserver.disconnect();
+  reelObserver = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      const card = en.target;
+      const v = card.querySelector('video');
+      if (!v) return;
+      // À la souris, une carte avec bannière ne joue qu'au survol.
+      if (card.classList.contains('has-preview') && hasHover()) return;
+      if (en.isIntersecting && en.intersectionRatio >= .6) v.play().catch(() => {});
+      else v.pause();
+    });
+  }, { threshold: [0, .6, 1] });
+  document.querySelectorAll('#reelTrack .reel-card').forEach(c => reelObserver.observe(c));
+  bindReelPreviews();
+}
+
+/* Survol = la bannière s'efface et l'extrait démarre ; on quitte = retour à la bannière. */
+function bindReelPreviews() {
+  if (!hasHover()) return;
+  document.querySelectorAll('#reelTrack .reel-card.has-preview').forEach(card => {
+    const v = card.querySelector('video');
+    if (!v) return;
+    card.addEventListener('mouseenter', () => {
+      v.currentTime = 0;
+      v.play().catch(() => {});
+    });
+    card.addEventListener('mouseleave', () => {
+      v.pause();
+      v.currentTime = 0;
+    });
+  });
+}
+
+function toggleReelSound(id, btn) {
+  const v = document.querySelector(`#reelTrack .reel-card[data-reel="${id}"] video`);
+  if (!v) return;
+  v.muted = !v.muted;
+  const icon = btn.querySelector('i');
+  if (icon) icon.className = `bi ${v.muted ? 'bi-volume-mute' : 'bi-volume-up-fill'}`;
+  btn.setAttribute('aria-label', v.muted ? 'Activer le son' : 'Couper le son');
+  if (!v.muted) v.play().catch(() => {});
+}
+
+function updateReelCounter() {
+  const track = document.getElementById('reelTrack');
+  const counter = document.getElementById('reelCounter');
+  if (!track || !counter) return;
+  const cards = [...track.querySelectorAll('.reel-card')];
+  if (!cards.length) return;
+  const trackBox = track.getBoundingClientRect();
+  const mid = trackBox.left + trackBox.width / 2;
+  let idx = 0;
+  let best = Infinity;
+  cards.forEach((c, i) => {
+    const box = c.getBoundingClientRect();
+    const distance = Math.abs(box.left + box.width / 2 - mid);
+    if (distance < best) { best = distance; idx = i; }
+  });
+  counter.textContent = `${idx + 1} / ${cards.length}`;
 }
 
 /* ==================== AUTH (SIMULÉE) ==================== */
@@ -595,6 +822,10 @@ function initShop() {
   renderCart();
   renderAccount();
   renderOrders();
+  renderReels();
+
+  const reelTrack = document.getElementById('reelTrack');
+  if (reelTrack) reelTrack.addEventListener('scroll', updateReelCounter, { passive: true });
 
   // Filtres catégories
   document.querySelectorAll('.filter-chip').forEach(chip => {
@@ -653,6 +884,8 @@ function initShop() {
     if (e.key === KEYS.products) { state.products = DB.get(KEYS.products, []); renderProducts(); renderCart(); }
     if (e.key === KEYS.promos) { state.promos = DB.get(KEYS.promos, []); renderPromoStrip(); renderCart(); }
     if (e.key === KEYS.settings) { state.settings = readSettings(); applyShopInfo(); }
+    if (e.key === KEYS.reviews) { state.reviews = DB.get(KEYS.reviews, []); renderProducts(); }
+    if (e.key === KEYS.reels) { state.reels = DB.get(KEYS.reels, []); renderReels(); }
   });
 
   // Parallaxe légère des étoiles du hero
@@ -697,6 +930,7 @@ function observeReveals() {
 let adminTab = 'products';
 let editingProductId = null;
 let editingPromoId = null;
+let editingReelId = null;
 
 function initAdmin() {
   loadState();
@@ -709,6 +943,15 @@ function initAdmin() {
   const pfPreview = document.getElementById('pfImagePreview');
   if (pfPreview) pfPreview.addEventListener('error', () => {
     document.getElementById('pfImagePreviewWrap')?.classList.remove('show');
+  });
+
+  const rfPoster = document.getElementById('rfPoster');
+  if (rfPoster) rfPoster.addEventListener('input', updateReelPosterPreview);
+  const rfPosterFile = document.getElementById('rfPosterFile');
+  if (rfPosterFile) rfPosterFile.addEventListener('change', handleReelPosterFile);
+  const rfPreview = document.getElementById('rfPosterPreview');
+  if (rfPreview) rfPreview.addEventListener('error', () => {
+    document.getElementById('rfPosterPreviewWrap')?.classList.remove('show');
   });
 }
 
@@ -739,7 +982,13 @@ function adminLogout() {
   checkAdminGate();
 }
 
-const ADMIN_PANELS = { products: 'adminProductsPanel', promos: 'adminPromosPanel', shop: 'adminShopPanel' };
+const ADMIN_PANELS = {
+  products: 'adminProductsPanel',
+  promos: 'adminPromosPanel',
+  reviews: 'adminReviewsPanel',
+  reels: 'adminReelsPanel',
+  shop: 'adminShopPanel',
+};
 
 function setAdminTab(tab) {
   adminTab = tab;
@@ -753,6 +1002,8 @@ function renderAdmin() {
   renderAdminStats();
   renderAdminProducts();
   renderAdminPromos();
+  renderAdminReviews();
+  renderAdminReels();
   renderAdminShop();
 }
 
@@ -797,6 +1048,7 @@ function submitShopSettings(e) {
   }
 
   state.settings = {
+    ...state.settings,
     whatsapp,
     phone,
     email,
@@ -1008,6 +1260,214 @@ function deletePromo(id) {
   renderAdminPromos();
   renderAdminStats();
   toast(`Code "${p.code}" supprimé`);
+}
+
+/* ---------- MODÉRATION DES AVIS ---------- */
+function renderAdminReviews() {
+  const badge = document.getElementById('tabBadgeReviews');
+  const pending = state.reviews.filter(r => r.status !== 'approved').length;
+  if (badge) {
+    badge.textContent = pending;
+    badge.classList.toggle('d-none', pending === 0);
+  }
+
+  const tbody = document.getElementById('adminReviewsBody');
+  if (!tbody) return;
+  if (!state.reviews.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><i class="bi bi-star"></i>Aucun avis client. Les visiteurs peuvent noter une pièce depuis sa fiche.</div></td></tr>`;
+    return;
+  }
+  const sorted = [...state.reviews].sort((a, b) => {
+    if (a.status !== b.status) return a.status === 'approved' ? 1 : -1;
+    return new Date(b.date) - new Date(a.date);
+  });
+  tbody.innerHTML = sorted.map(r => {
+    const product = state.products.find(p => p.id === r.productId);
+    const published = r.status === 'approved';
+    return `
+    <tr>
+      <td>
+        <span class="t-name">${escapeHtml(r.author)}</span>
+        ${starsHTML(r.rating)}
+        ${r.verified ? '<br><small class="text-secondary"><i class="bi bi-patch-check-fill me-1"></i>Achat vérifié</small>' : ''}
+      </td>
+      <td><small>${escapeHtml(product ? product.name : 'Produit supprimé')}</small></td>
+      <td><small class="text-secondary">${escapeHtml(r.comment || '—')}</small><br><small class="text-secondary">${new Date(r.date).toLocaleDateString('fr-FR')}</small></td>
+      <td><span class="status-pill ${published ? 'on' : 'off'}">${published ? 'Publié' : 'En attente'}</span></td>
+      <td class="text-nowrap">
+        <button class="icon-action me-1" title="${published ? 'Retirer de la boutique' : 'Publier sur la boutique'}" onclick="toggleReview('${r.id}')"><i class="bi bi-${published ? 'eye-slash' : 'check2'}"></i></button>
+        <button class="icon-action danger" title="Supprimer" onclick="deleteReview('${r.id}')"><i class="bi bi-trash3"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleReview(id) {
+  const r = state.reviews.find(rv => rv.id === id);
+  if (!r) return;
+  r.status = r.status === 'approved' ? 'pending' : 'approved';
+  saveReviews();
+  renderAdminReviews();
+  toast(`Avis de ${r.author} ${r.status === 'approved' ? 'publié' : 'retiré de la boutique'}`, r.status === 'approved' ? 'success' : undefined);
+}
+
+function deleteReview(id) {
+  const r = state.reviews.find(rv => rv.id === id);
+  if (!r) return;
+  if (!confirm(`Supprimer définitivement l'avis de "${r.author}" ?`)) return;
+  state.reviews = state.reviews.filter(rv => rv.id !== id);
+  saveReviews();
+  renderAdminReviews();
+  toast('Avis supprimé');
+}
+
+/* Saisie manuelle d'un avis (ex. un client satisfait qui t'écrit sur WhatsApp) */
+function openReviewForm() {
+  const select = document.getElementById('arfProduct');
+  if (!select) return;
+  select.innerHTML = state.products
+    .map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`)
+    .join('');
+  document.getElementById('arfAuthor').value = '';
+  document.getElementById('arfComment').value = '';
+  document.getElementById('arfVerified').checked = true;
+  document.getElementById('arfPublish').checked = true;
+  pickAdminStar(5);
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('reviewModal')).show();
+}
+
+function submitAdminReviewForm(e) {
+  e.preventDefault();
+  const productId = document.getElementById('arfProduct').value;
+  const author = document.getElementById('arfAuthor').value.trim();
+  const rating = Number(document.getElementById('arfRating').value || 0);
+  const comment = document.getElementById('arfComment').value.trim();
+  if (!productId) { toast('Aucun produit disponible'); return; }
+  if (!author) { toast('Nom du client obligatoire'); return; }
+  if (rating < 1 || rating > 5) { toast('Choisis une note en étoiles'); return; }
+
+  state.reviews.unshift({
+    id: uid(), productId, rating, author, comment,
+    date: new Date().toISOString(),
+    status: document.getElementById('arfPublish').checked ? 'approved' : 'pending',
+    verified: document.getElementById('arfVerified').checked,
+  });
+  saveReviews();
+  renderAdminReviews();
+  bootstrap.Modal.getInstance(document.getElementById('reviewModal'))?.hide();
+  toast(`Avis de ${author} enregistré`, 'success');
+}
+
+/* ---------- CRUD VIDÉOS 9:16 ---------- */
+function renderAdminReels() {
+  const tbody = document.getElementById('adminReelsBody');
+  if (!tbody) return;
+  if (!state.reels.length) {
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><i class="bi bi-camera-reels"></i>Aucune vidéo. La section reste masquée sur la boutique tant qu'elle est vide.</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = state.reels.map(r => `
+    <tr>
+      <td>${r.poster ? `<img class="thumb" src="${escapeHtml(r.poster)}" alt="">` : '<span class="text-secondary">—</span>'}</td>
+      <td>
+        <span class="t-name">${escapeHtml(r.title || 'Sans titre')}</span>
+        <br><small class="text-secondary">${r.video ? 'Vidéo 9:16' : 'Visuel fixe'}</small>
+      </td>
+      <td><small class="text-secondary">${r.link ? escapeHtml(r.linkLabel || 'Voir la vidéo') : 'Aucune redirection'}</small></td>
+      <td class="text-nowrap">
+        <button class="icon-action me-1" title="Modifier" onclick="openReelForm('${r.id}')"><i class="bi bi-pencil"></i></button>
+        <button class="icon-action danger" title="Supprimer" onclick="deleteReel('${r.id}')"><i class="bi bi-trash3"></i></button>
+      </td>
+    </tr>`).join('');
+}
+
+function updateReelPosterPreview() {
+  const input = document.getElementById('rfPoster');
+  const wrap = document.getElementById('rfPosterPreviewWrap');
+  const img = document.getElementById('rfPosterPreview');
+  if (!input || !wrap || !img) return;
+  const val = input.value.trim();
+  if (!val) { wrap.classList.remove('show'); return; }
+  img.src = val;
+  wrap.classList.add('show');
+}
+
+function handleReelPosterFile(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    e.target.value = '';
+    toast('Image trop lourde (2 Mo max). Passe par une URL.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    document.getElementById('rfPoster').value = reader.result;
+    updateReelPosterPreview();
+    toast('Visuel chargé. Enregistre pour publier.', 'success');
+  };
+  reader.onerror = () => toast('Impossible de lire ce fichier image');
+  reader.readAsDataURL(file);
+}
+
+function openReelForm(id = null) {
+  editingReelId = id;
+  const r = id ? state.reels.find(x => x.id === id) : null;
+  document.getElementById('reelFormTitle').textContent = r ? 'Modifier la vidéo' : 'Ajouter une vidéo';
+  document.getElementById('rfTitle').value = r ? (r.title || '') : '';
+  document.getElementById('rfVideo').value = r ? (r.video || '') : '';
+  document.getElementById('rfPoster').value = r ? (r.poster || '') : '';
+  document.getElementById('rfPosterFile').value = '';
+  document.getElementById('rfLink').value = r ? (r.link || '') : '';
+  document.getElementById('rfLinkLabel').value = r ? (r.linkLabel || '') : '';
+  updateReelPosterPreview();
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('reelModal')).show();
+}
+
+/* Un src média est sûr s'il est en http(s), en data:image/ (import local),
+   ou en chemin relatif — tout autre schéma (javascript:, data:text/html…) est refusé. */
+function isSafeMediaSrc(raw, allowDataImage) {
+  if (/^https?:\/\//i.test(raw)) return true;
+  if (allowDataImage && /^data:image\//i.test(raw)) return true;
+  return !/^[a-z][a-z0-9+.-]*:/i.test(raw) && !raw.startsWith('//');
+}
+
+function submitReelForm(e) {
+  e.preventDefault();
+  const value = id => (document.getElementById(id)?.value || '').trim();
+  const title = value('rfTitle');
+  const video = value('rfVideo');
+  const poster = value('rfPoster');
+  const link = value('rfLink');
+  const linkLabel = value('rfLinkLabel');
+
+  if (!video && !poster) { toast('Renseigne au moins une vidéo ou un visuel'); return; }
+  if (video && !isSafeMediaSrc(video, false)) { toast("L'URL de la vidéo doit être un lien http(s) ou un fichier du site"); return; }
+  if (poster && !isSafeMediaSrc(poster, true)) { toast('Le visuel doit être un lien http(s), un fichier du site ou une image importée'); return; }
+  if (link && !/^https?:\/\//i.test(link)) { toast('Le lien de redirection doit commencer par http:// ou https://'); return; }
+
+  const data = { title, video, poster, link, linkLabel };
+  if (editingReelId) {
+    const idx = state.reels.findIndex(x => x.id === editingReelId);
+    state.reels[idx] = { ...state.reels[idx], ...data };
+    toast('Vidéo modifiée', 'success');
+  } else {
+    state.reels.push({ id: uid(), ...data });
+    toast('Vidéo ajoutée — visible en bas de la boutique', 'success');
+  }
+  saveReels();
+  renderAdminReels();
+  bootstrap.Modal.getInstance(document.getElementById('reelModal'))?.hide();
+}
+
+function deleteReel(id) {
+  const r = state.reels.find(x => x.id === id);
+  if (!r) return;
+  if (!confirm(`Supprimer "${r.title || 'cette vidéo'}" ?`)) return;
+  state.reels = state.reels.filter(x => x.id !== id);
+  saveReels();
+  renderAdminReels();
+  toast('Vidéo supprimée');
 }
 
 /* ==================== BOUTON RETOUR ====================

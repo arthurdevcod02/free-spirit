@@ -1122,6 +1122,255 @@ body::after {
   margin: 0;
 }
 
+/* ============ Avis clients & notation en étoiles ============ */
+.stars {
+  display: inline-flex;
+  gap: .12rem;
+  color: var(--rouge);
+  font-size: .78rem;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.pc-rating { display: flex; align-items: center; gap: .35rem; margin-bottom: .4rem; }
+.pc-rating .stars { font-size: .68rem; }
+.pc-rating-count { font-size: .66rem; color: var(--gris); }
+
+.qv-reviews {
+  margin-top: 1.6rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+.review-avg {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--blanc);
+}
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: .8rem;
+  margin: 1rem 0;
+  max-height: 250px;
+  overflow-y: auto;
+}
+.review-item {
+  padding: .8rem .9rem;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.1);
+}
+.review-author {
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--blanc);
+  margin-bottom: .25rem;
+}
+.review-comment {
+  font-size: .82rem;
+  line-height: 1.6;
+  color: var(--gris);
+  margin: .5rem 0 0;
+}
+.review-verified {
+  display: inline-block;
+  margin-top: .5rem;
+  font-size: .64rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #4ade80;
+}
+
+.btn-review-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: .6rem 1.1rem;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.25);
+  color: var(--blanc);
+  font-family: var(--font-display);
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  transition: color .25s, border-color .25s, background-color .25s;
+}
+.btn-review-toggle:hover {
+  border-color: var(--rouge);
+  color: var(--rouge);
+  background: rgba(255,30,30,.08);
+}
+
+.review-form { margin-top: 1rem; }
+.review-note {
+  display: block;
+  margin-top: .6rem;
+  font-size: .7rem;
+  text-align: center;
+  color: var(--gris);
+}
+
+.star-picker { display: flex; gap: .3rem; }
+.star-btn {
+  padding: .15rem;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,.3);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color .2s, transform .2s;
+}
+.star-btn.on { color: var(--rouge); }
+.star-btn:hover { color: var(--rouge); transform: scale(1.15); }
+
+.tab-badge {
+  display: inline-block;
+  min-width: 1.3rem;
+  margin-left: .5rem;
+  padding: .1rem .38rem;
+  border-radius: 999px;
+  background: var(--rouge);
+  color: #fff;
+  font-size: .6rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.fs-dark .form-check-input { background-color: rgba(255,255,255,.08); border-color: rgba(255,255,255,.3); }
+.fs-dark .form-check-input:checked { background-color: var(--rouge); border-color: var(--rouge); }
+.fs-dark .form-check-input:focus { border-color: var(--rouge); box-shadow: 0 0 0 .2rem rgba(255,30,30,.25); }
+
+/* ============ Showreel 9:16 (bas de page) ============ */
+#showreel {
+  background: var(--noir-2);
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+.reel-counter {
+  font-family: var(--font-display);
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  color: var(--blanc);
+}
+.reel-track {
+  display: flex;
+  gap: 1rem;
+  padding: 0 max(1rem, calc((100vw - 1140px) / 2)) .5rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.reel-track::-webkit-scrollbar { display: none; }
+.reel-card {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(72vw, 300px);
+  aspect-ratio: 9 / 16;
+  margin: 0;
+  overflow: hidden;
+  scroll-snap-align: center;
+  background: var(--noir-3);
+  border: 1px solid rgba(255,255,255,.12);
+}
+.reel-media { position: absolute; inset: 0; }
+.reel-media > video,
+.reel-media > img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Bannière fixe qui masque la vidéo jusqu'au survol.
+   N'existe que là où le survol existe : au doigt elle masquerait la vidéo pour toujours. */
+.reel-still { display: none; transition: opacity .45s ease; }
+.reel-hint {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 54px; height: 54px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,.4);
+  border-radius: 50%;
+  background: rgba(11,11,11,.5);
+  color: var(--blanc);
+  font-size: 1.5rem;
+  line-height: 1;
+  pointer-events: none;
+  display: none;
+  transition: opacity .35s ease, transform .35s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .reel-still { display: block; }
+  .reel-hint { display: inline-flex; }
+  .reel-card.has-preview:hover .reel-still { opacity: 0; }
+  .reel-card.has-preview:hover .reel-hint {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.75);
+  }
+}
+.reel-caption {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+  padding: 2.6rem .9rem .9rem;
+  background: linear-gradient(to top, rgba(11,11,11,.94), transparent);
+  pointer-events: none;
+}
+.reel-caption > * { pointer-events: auto; }
+.reel-title {
+  font-family: var(--font-display);
+  font-size: .74rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--blanc);
+}
+.reel-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  padding: .48rem .85rem;
+  background: rgba(11,11,11,.55);
+  border: 1px solid var(--blanc);
+  color: var(--blanc);
+  font-size: .66rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background-color .25s, border-color .25s, color .25s;
+}
+.reel-link:hover { background: var(--rouge); border-color: var(--rouge); color: #fff; }
+.reel-sound {
+  position: absolute;
+  top: .7rem; right: .7rem;
+  width: 38px; height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  background: rgba(11,11,11,.55);
+  color: var(--blanc);
+  font-size: .9rem;
+  cursor: pointer;
+  transition: color .25s, border-color .25s;
+}
+.reel-sound:hover { color: var(--rouge); border-color: var(--rouge); }
+
 /* ============================================================
    RESPONSIVE — Tablettes (≤ 991.98px)
    ============================================================ */
@@ -1213,6 +1462,12 @@ body::after {
   .cart-total-row.grand { font-size: 1rem; }
 
   .footer-link { font-size: .76rem; }
+
+  .qv-reviews { margin-top: 1.2rem; padding-top: 1.1rem; }
+  .review-list { max-height: 210px; }
+
+  .reel-card { width: 78vw; }
+  .reel-title { font-size: .68rem; }
 
   .stat-card .stat-label { font-size: .58rem; letter-spacing: .18em; }
 }
