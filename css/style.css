@@ -17,7 +17,12 @@
   --font-body: 'Inter', sans-serif;
 }
 
-* { -webkit-tap-highlight-color: transparent; }
+* { -webkit-tap-highlight-color: rgba(255,30,30,.18); }
+
+/* Supprime le délai de 300 ms des mobiles et rend le toucher instantané */
+a, button, input, select, textarea, [role="button"] {
+  touch-action: manipulation;
+}
 
 html { scroll-behavior: smooth; }
 
@@ -609,10 +614,49 @@ body::after {
   border-left: 1px solid rgba(255,255,255,.1);
   border-radius: 0;
 }
-#cartOffcanvas { width: 420px; max-width: 92vw; }
+#cartOffcanvas { width: 420px; max-width: 92vw; z-index: 1065; }
+/* Au-dessus de la bannière défilante fixe (z-index 1050) sinon elle bloque les touches en haut du tiroir */
+.offcanvas-backdrop { z-index: 1060; }
 .modal-content.fs-dark { border: 1px solid rgba(255,255,255,.12); }
+
+/* Croix de fermeture dessinée en CSS : zone de toucher 44x44, réponse immédiate */
 .fs-dark .btn-close {
-  filter: invert(1) grayscale(100%);
+  background: none;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  margin: -8px -8px 0 0;
+  position: relative;
+  border-radius: 50%;
+  opacity: 1;
+  transition: transform .12s ease, background-color .15s ease;
+}
+.fs-dark .btn-close::before,
+.fs-dark .btn-close::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 2px;
+  background: var(--blanc);
+  border-radius: 2px;
+  transition: background-color .15s ease;
+}
+.fs-dark .btn-close::before { transform: translate(-50%,-50%) rotate(45deg); }
+.fs-dark .btn-close::after { transform: translate(-50%,-50%) rotate(-45deg); }
+.fs-dark .btn-close:hover { background: rgba(255,255,255,.08); }
+.fs-dark .btn-close:hover::before,
+.fs-dark .btn-close:hover::after,
+.fs-dark .btn-close:active::before,
+.fs-dark .btn-close:active::after { background: var(--rouge); }
+.fs-dark .btn-close:active { transform: scale(.9); background: rgba(255,30,30,.14); }
+.fs-dark .btn-close:focus { box-shadow: none; }
+.fs-dark .btn-close:focus-visible {
+  outline: 2px solid var(--rouge);
+  outline-offset: 2px;
+  box-shadow: none;
 }
 .fs-dark .form-control,
 .fs-dark .form-select {
@@ -786,6 +830,27 @@ body::after {
   transition: color .2s;
 }
 .footer-link:hover { color: var(--rouge); }
+
+/* ============ Réseaux sociaux du pied de page ============ */
+.social-row { display: flex; gap: .6rem; flex-wrap: wrap; }
+.social-link {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,.15);
+  color: var(--blanc);
+  font-size: 1.05rem;
+  text-decoration: none;
+  transition: color .25s, border-color .25s, background-color .25s, transform .25s;
+}
+.social-link:hover {
+  border-color: var(--rouge);
+  color: var(--rouge);
+  background: rgba(255,30,30,.08);
+  transform: translateY(-2px);
+}
 
 /* ============ Toasts ============ */
 #toastZone {

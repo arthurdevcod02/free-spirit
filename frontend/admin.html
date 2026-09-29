@@ -79,6 +79,7 @@
       <div class="d-flex flex-wrap gap-2 mb-4">
         <button class="admin-tab-btn active" data-tab="products" onclick="setAdminTab('products')"><i class="bi bi-box-seam me-1"></i>Produits</button>
         <button class="admin-tab-btn" data-tab="promos" onclick="setAdminTab('promos')"><i class="bi bi-tag me-1"></i>Codes promo</button>
+        <button class="admin-tab-btn" data-tab="shop" onclick="setAdminTab('shop')"><i class="bi bi-shop me-1"></i>Boutique</button>
       </div>
 
       <!-- ===== PANEL PRODUITS ===== -->
@@ -115,6 +116,67 @@
           <i class="bi bi-info-circle me-1"></i>
           Les codes actifs s'affichent instantanément sur la page d'accueil et sont appliqués dans le panier des clients.
         </p>
+      </div>
+
+      <!-- ===== PANEL BOUTIQUE ===== -->
+      <div id="adminShopPanel" class="d-none">
+        <div class="mb-4">
+          <h2 class="section-title fs-5 mb-1">Informations de la <span class="chrome-text">boutique</span></h2>
+          <p class="text-secondary small mb-0" style="max-width:640px;">
+            Ces coordonnées pilotent les boutons WhatsApp, téléphone, email et localisation de la boutique.
+            Plus besoin de toucher au code : la modification s'applique immédiatement.
+          </p>
+        </div>
+        <form onsubmit="submitShopSettings(event)" style="max-width:760px;">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="sfWhatsapp">Numéro WhatsApp *</label>
+              <input type="tel" class="form-control" id="sfWhatsapp" inputmode="numeric" placeholder="22893838593" required>
+              <div class="form-text">Format international, sans « + » ni espaces. Sert aux commandes et au bouton flottant.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="sfPhone">Numéro affiché *</label>
+              <input type="tel" class="form-control" id="sfPhone" placeholder="+228 93 83 85 93" required>
+              <div class="form-text">Tel qu'il doit apparaître dans le pied de page. Le lien d'appel est généré automatiquement.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="sfEmail">Adresse email</label>
+              <input type="email" class="form-control" id="sfEmail" placeholder="contact@freespirit.prod">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="sfAddress">Localisation / adresse</label>
+              <input type="text" class="form-control" id="sfAddress" placeholder="Lomé, Togo">
+              <div class="form-text">Affichée dans le pied de page et utilisée comme recherche Google Maps par défaut.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="sfMaps">Lien Google Maps <span class="fw-normal text-secondary">(optionnel)</span></label>
+              <input type="url" class="form-control" id="sfMaps" placeholder="https://maps.app.goo.gl/...">
+              <div class="form-text">Google Maps &gt; votre lieu &gt; Partager &gt; Copier le lien. Prioritaire sur l'adresse.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="sfWaProfile">Lien du profil WhatsApp <span class="fw-normal text-secondary">(optionnel)</span></label>
+              <input type="url" class="form-control" id="sfWaProfile" placeholder="https://wa.me/22893838593">
+              <div class="form-text">Utilisé pour le lien « WhatsApp — réponse rapide » du pied de page.</div>
+            </div>
+            <div class="col-12 mt-3">
+              <label class="form-label mb-1">Pages réseaux sociaux <span class="fw-normal text-secondary">(optionnel)</span></label>
+              <div class="form-text">Les icônes n'apparaissent dans le pied de page que si le lien est renseigné.</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="sfTiktok"><i class="bi bi-tiktok me-1"></i>TikTok</label>
+              <input type="url" class="form-control" id="sfTiktok" placeholder="https://www.tiktok.com/@freespirit">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="sfInstagram"><i class="bi bi-instagram me-1"></i>Instagram</label>
+              <input type="url" class="form-control" id="sfInstagram" placeholder="https://www.instagram.com/freespirit">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="sfFacebook"><i class="bi bi-facebook me-1"></i>Facebook</label>
+              <input type="url" class="form-control" id="sfFacebook" placeholder="https://www.facebook.com/freespirit">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-fs w-100 mt-4"><i class="bi bi-check-lg me-1"></i>Enregistrer les informations</button>
+        </form>
       </div>
     </div>
   </div>

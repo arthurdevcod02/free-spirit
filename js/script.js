@@ -8,11 +8,21 @@
 
 /* ==================== CONFIGURATION ==================== */
 const CONFIG = {
-  WHATSAPP_NUMBER: '22893838593',    // <-- Numéro WhatsApp du vendeur (format international sans "+")
-  PHONE_DISPLAY: '+228 93 83 85 93', // <-- Numéro affiché / appel téléphonique
-  PHONE_TEL: '+22893838593',
   CURRENCY: 'FCFA',
   ADMIN_PASSWORD: 'freespirit',        // <-- Mot de passe de l'espace admin
+};
+
+// Infos de la boutique : modifiables par l'admin dans admin.html > onglet « Boutique »
+const DEFAULT_SETTINGS = {
+  whatsapp: '22893838593',            // numéro WhatsApp, format international sans "+"
+  phone: '+228 93 83 85 93',          // numéro affiché sur le site
+  email: 'contact@freespirit.prod',
+  address: 'Lomé, Togo',
+  mapsUrl: '',                        // lien Google Maps de la boutique (optionnel)
+  waProfile: '',                      // lien du profil WhatsApp (optionnel)
+  tiktok: '',                         // pages réseaux sociaux (optionnelles)
+  instagram: '',
+  facebook: '',
 };
 
 // Chemin des visuels par défaut, relatif aux pages (frontend/)
@@ -42,6 +52,7 @@ const KEYS = {
   cart: 'fs_cart_v2',
   orders: 'fs_orders_v2',
   user: 'fs_user_v1',
+  settings: 'fs_settings_v1',
   admin: 'fs_admin_unlocked',
 };
 
@@ -96,10 +107,13 @@ const state = {
   cart: [],
   orders: [],
   user: null,
+  settings: { ...DEFAULT_SETTINGS },
   promo: null,        // code promo appliqué dans le panier
   filter: 'all',
   qv: { product: null, size: null, qty: 1 }, // quick view
 };
+
+const readSettings = () => ({ ...DEFAULT_SETTINGS, ...(DB.get(KEYS.settings, null) || {}) });
 
 function loadState() {
   // Les produits sauvegardés avec l'ancien dossier "FREE SPIRIT/" sont migrés vers assets/images/
@@ -109,14 +123,17 @@ function loadState() {
   state.cart = DB.get(KEYS.cart, []);
   state.orders = DB.get(KEYS.orders, []);
   state.user = DB.get(KEYS.user, null);
+  state.settings = readSettings();
   if (!localStorage.getItem(KEYS.products)) DB.set(KEYS.products, state.products);
   if (!localStorage.getItem(KEYS.promos)) DB.set(KEYS.promos, state.promos);
+  if (!localStorage.getItem(KEYS.settings)) DB.set(KEYS.settings, state.settings);
 }
 const saveProducts = () => DB.set(KEYS.products, state.products);
 const savePromos = () => DB.set(KEYS.promos, state.promos);
 const saveCart = () => DB.set(KEYS.cart, state.cart);
 const saveOrders = () => DB.set(KEYS.orders, state.orders);
 const saveUser = () => DB.set(KEYS.user, state.user);
+const saveSettings = () => DB.set(KEYS.settings, state.settings);
 
 /* ==================== TOASTS ==================== */
 function toast(message, type = 'info') {
@@ -189,9 +206,56 @@ function clearCart() {
   renderCart();
 }
 
+/* ==================== COORDONNÉES DE LA BOUTIQUE ==================== */
+const WA_INTRO = "Bonjour FREE SPIRIT ! J'aimerais des informations sur vos pièces.";
+
+const digitsOnly = value => String(value || '').replace(/\D/g, '');
+const telHref = () => {
+  const n = digitsOnly(state.settings.phone);
+  return n ? `tel:+${n}` : '#';
+};
+const waHref = text => {
+  const n = digitsOnly(state.settings.whatsapp);
+  return n ? `https://wa.me/${n}?text=${encodeURIComponent(text || '')}` : '#';
+};
+const mapsHref = () => {
+  const { mapsUrl, address } = state.settings;
+  if (mapsUrl && /^https?:\/\//i.test(mapsUrl)) return mapsUrl;
+  if (address) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+  return '#';
+};
+
+/* Branche tous les liens du site sur les coordonnées enregistrées par l'admin */
+function applyShopInfo() {
+  const s = state.settings;
+  const link = (id, href) => { const el = document.getElementById(id); if (el) el.href = href; };
+  const text = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+
+  link('waFloat', waHref(WA_INTRO));
+  link('phoneFloat', telHref());
+  link('phoneFooterLink', telHref());
+  link('emailFooterLink', s.email ? `mailto:${s.email}` : '#');
+  link('mapsFooterLink', mapsHref());
+  link('contactWhatsApp', s.waProfile || waHref(WA_INTRO));
+
+  text('phoneLabel', s.phone || 'Numéro à définir');
+  text('emailLabel', s.email || 'Email à définir');
+  text('addressLabel', s.address || 'Localisation à définir');
+
+  // Réseaux sociaux : un lien non renseigné reste masqué
+  [['linkTiktok', s.tiktok], ['linkInstagram', s.instagram], ['linkFacebook', s.facebook]].forEach(([id, url]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.href = url || '#';
+    el.classList.toggle('d-none', !url);
+  });
+}
+
 /* ==================== WHATSAPP ==================== */
 function openWhatsApp(text) {
-  window.open(`https://wa.me/${CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
+  const url = waHref(text);
+  if (url === '#') { toast("Numéro WhatsApp non renseigné dans l'espace admin"); return; }
+  window.open(url, '_blank');
 }
 
 function buildOrderMessage(items, promo, totals, title) {
@@ -564,17 +628,10 @@ function initShop() {
     });
   }
 
-  // Liens & boutons statiques
-  const waFloat = document.getElementById('waFloat');
-  if (waFloat) waFloat.href = `https://wa.me/${CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour FREE SPIRIT ! J'aimerais des informations sur vos pièces.")}`;
-  const phoneFloat = document.getElementById('phoneFloat');
-  if (phoneFloat) phoneFloat.href = `tel:${CONFIG.PHONE_TEL}`;
-  const phoneLabel = document.getElementById('phoneLabel');
-  if (phoneLabel) phoneLabel.textContent = CONFIG.PHONE_DISPLAY;
+  // Coordonnées de la boutique (numéro, WhatsApp, email, localisation)
+  applyShopInfo();
   const heroWa = document.getElementById('heroWhatsApp');
-  if (heroWa) heroWa.addEventListener('click', () => openWhatsApp("Bonjour FREE SPIRIT ! Je veux commander une pièce de la collection."));
-  const contactWa = document.getElementById('contactWhatsApp');
-  if (contactWa) contactWa.href = waFloat ? waFloat.href : '#';
+  if (heroWa) heroWa.addEventListener('click', () => openWhatsApp('Bonjour FREE SPIRIT ! Je veux commander une pièce de la collection.'));
 
   // Compte
   const accountBtn = document.getElementById('accountBtn');
@@ -595,6 +652,7 @@ function initShop() {
   window.addEventListener('storage', e => {
     if (e.key === KEYS.products) { state.products = DB.get(KEYS.products, []); renderProducts(); renderCart(); }
     if (e.key === KEYS.promos) { state.promos = DB.get(KEYS.promos, []); renderPromoStrip(); renderCart(); }
+    if (e.key === KEYS.settings) { state.settings = readSettings(); applyShopInfo(); }
   });
 
   // Parallaxe légère des étoiles du hero
@@ -681,17 +739,74 @@ function adminLogout() {
   checkAdminGate();
 }
 
+const ADMIN_PANELS = { products: 'adminProductsPanel', promos: 'adminPromosPanel', shop: 'adminShopPanel' };
+
 function setAdminTab(tab) {
   adminTab = tab;
   document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  document.getElementById('adminProductsPanel').classList.toggle('d-none', tab !== 'products');
-  document.getElementById('adminPromosPanel').classList.toggle('d-none', tab !== 'promos');
+  Object.entries(ADMIN_PANELS).forEach(([key, id]) => {
+    document.getElementById(id)?.classList.toggle('d-none', key !== tab);
+  });
 }
 
 function renderAdmin() {
   renderAdminStats();
   renderAdminProducts();
   renderAdminPromos();
+  renderAdminShop();
+}
+
+/* ---------- INFOS BOUTIQUE ---------- */
+function renderAdminShop() {
+  const field = (id, value) => { const el = document.getElementById(id); if (el) el.value = value || ''; };
+  field('sfWhatsapp', state.settings.whatsapp);
+  field('sfPhone', state.settings.phone);
+  field('sfEmail', state.settings.email);
+  field('sfAddress', state.settings.address);
+  field('sfMaps', state.settings.mapsUrl);
+  field('sfWaProfile', state.settings.waProfile);
+  field('sfTiktok', state.settings.tiktok);
+  field('sfInstagram', state.settings.instagram);
+  field('sfFacebook', state.settings.facebook);
+}
+
+function submitShopSettings(e) {
+  e.preventDefault();
+  const value = id => (document.getElementById(id)?.value || '').trim();
+
+  const whatsapp = digitsOnly(value('sfWhatsapp'));
+  const phone = value('sfPhone');
+  const email = value('sfEmail');
+  if (!whatsapp) { toast('Numéro WhatsApp requis (indicatif pays inclus)'); return; }
+  if (!phone) { toast("Numéro de téléphone d'affichage requis"); return; }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('Adresse email invalide'); return; }
+
+  const urlFields = [
+    ['sfMaps', 'mapsUrl', 'Le lien Google Maps'],
+    ['sfWaProfile', 'waProfile', 'Le lien du profil WhatsApp'],
+    ['sfTiktok', 'tiktok', 'Le lien TikTok'],
+    ['sfInstagram', 'instagram', 'Le lien Instagram'],
+    ['sfFacebook', 'facebook', 'Le lien Facebook'],
+  ];
+  const urls = {};
+  for (const [id, key, label] of urlFields) {
+    const raw = value(id);
+    if (!raw) { urls[key] = ''; continue; }
+    if (!/^https?:\/\//i.test(raw)) { toast(`${label} doit commencer par http:// ou https://`); return; }
+    urls[key] = raw;
+  }
+
+  state.settings = {
+    whatsapp,
+    phone,
+    email,
+    address: value('sfAddress'),
+    ...urls,
+  };
+  saveSettings();
+  renderAdminShop();
+  applyShopInfo();
+  toast('Informations de la boutique mises à jour', 'success');
 }
 
 function renderAdminStats() {
@@ -895,8 +1010,47 @@ function deletePromo(id) {
   toast(`Code "${p.code}" supprimé`);
 }
 
+/* ==================== BOUTON RETOUR ====================
+   Chaque popup ouverte empile une entrée d'historique : le retour
+   du téléphone ferme la popup au lieu de quitter le site. */
+const overlayStack = [];
+let historyClosing = 0;   // fermetures déjà déclenchées par le bouton retour
+
+function initOverlayHistory() {
+  document.addEventListener('shown.bs.modal', e => overlayOpened(e.target));
+  document.addEventListener('shown.bs.offcanvas', e => overlayOpened(e.target));
+  document.addEventListener('hidden.bs.modal', e => overlayClosed(e.target));
+  document.addEventListener('hidden.bs.offcanvas', e => overlayClosed(e.target));
+  window.addEventListener('popstate', onOverlayPopstate);
+}
+
+function overlayOpened(el) {
+  overlayStack.push(el);
+  history.pushState({ fsOverlay: overlayStack.length }, '');
+}
+
+function overlayClosed(el) {
+  const i = overlayStack.indexOf(el);
+  if (i >= 0) overlayStack.splice(i, 1);
+  if (historyClosing > 0) { historyClosing--; return; }
+  history.back();
+}
+
+function onOverlayPopstate(e) {
+  if (!overlayStack.length) return;
+  const target = e.state && typeof e.state.fsOverlay === 'number' ? e.state.fsOverlay : 0;
+  if (target >= overlayStack.length) return;
+  const count = overlayStack.length - target;
+  historyClosing = count;
+  overlayStack.slice(-count).reverse().forEach(el => {
+    const inst = bootstrap.Modal.getInstance(el) || bootstrap.Offcanvas.getInstance(el);
+    if (inst) inst.hide();
+  });
+}
+
 /* ==================== ROUTAGE ==================== */
 document.addEventListener('DOMContentLoaded', () => {
+  initOverlayHistory();
   const page = document.body.dataset.page;
   if (page === 'shop') initShop();
   if (page === 'admin') initAdmin();
