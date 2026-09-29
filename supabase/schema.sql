@@ -87,6 +87,7 @@ create table if not exists public.settings (
   phone       text not null default '',
   email       text not null default '',
   address     text not null default '',
+  "legalName" text not null default '',
   "mapsUrl"   text not null default '',
   "waProfile" text not null default '',
   tiktok      text not null default '',

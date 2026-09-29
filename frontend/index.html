@@ -9,7 +9,7 @@
   <!-- Politique de sécurité : n'autorise que les sources listées ci-dessous.
        'unsafe-inline' reste nécessaire aux gestionnaires onclick du site ;
        un attaquant ne peut en revanche charger aucun script d'un autre domaine. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; img-src 'self' data: blob: https:; media-src 'self' https: blob: data:; connect-src 'self' https://msamsyotdkxwhwfutens.supabase.co wss://msamsyotdkxwhwfutens.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self' https:; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; img-src 'self' data: blob: https:; media-src 'self' https: blob: data:; connect-src 'self' https://msamsyotdkxwhwfutens.supabase.co wss://msamsyotdkxwhwfutens.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self' https:">
   <meta name="referrer" content="strict-origin-when-cross-origin">
 
   <!-- Bootstrap 5 -->
@@ -129,13 +129,7 @@
           <span class="label-tag mb-2 d-inline-flex">Collection</span>
           <h2 class="section-title display-5">Pièces <span class="chrome-text">Signature</span></h2>
         </div>
-        <div class="d-flex flex-wrap gap-2">
-          <button class="filter-chip active" data-filter="all">Tous</button>
-          <button class="filter-chip" data-filter="tshirts">T-Shirts</button>
-          <button class="filter-chip" data-filter="pantalons">Pantalons</button>
-          <button class="filter-chip" data-filter="chaussures">Chaussures</button>
-          <button class="filter-chip" data-filter="ceintures">Ceintures</button>
-        </div>
+        <div class="d-flex flex-wrap gap-2" id="filterChips"><!-- Filtres générés d'après le catalogue --></div>
       </div>
 
       <!-- Codes promo actifs (synchronisés avec l'admin) -->
@@ -217,6 +211,8 @@
             <a href="#collection" class="footer-link">Collection</a>
             <a href="#apropos" class="footer-link">Manifeste</a>
             <a href="#hero" class="footer-link">Haut de page</a>
+            <a href="mentions-legales.html" class="footer-link">Mentions légales</a>
+            <a href="confidentialite.html" class="footer-link">Confidentialité</a>
           </div>
         </div>
         <div class="col-md-4">

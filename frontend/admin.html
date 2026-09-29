@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex">
 
   <!-- Même politique que la boutique : aucune source non listée ne peut s'exécuter. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; img-src 'self' data: blob: https:; media-src 'self' https: blob: data:; connect-src 'self' https://msamsyotdkxwhwfutens.supabase.co wss://msamsyotdkxwhwfutens.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self' https:; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; img-src 'self' data: blob: https:; media-src 'self' https: blob: data:; connect-src 'self' https://msamsyotdkxwhwfutens.supabase.co wss://msamsyotdkxwhwfutens.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self' https:">
   <meta name="referrer" content="strict-origin-when-cross-origin">
 
   <!-- Bootstrap 5 -->
@@ -232,6 +232,11 @@
               <input type="text" class="form-control" id="sfAddress" placeholder="Lomé, Togo">
               <div class="form-text">Affichée dans le pied de page et utilisée comme recherche Google Maps par défaut.</div>
             </div>
+            <div class="col-md-6">
+              <label class="form-label" for="sfLegalName">Nom légal du vendeur <span class="fw-normal text-secondary">(optionnel)</span></label>
+              <input type="text" class="form-control" id="sfLegalName" maxlength="120" placeholder="ex. Marco Miller ou Free Spirit SARL">
+              <div class="form-text">Utilisé dans les mentions légales et la politique de confidentialité.</div>
+            </div>
             <div class="col-12">
               <label class="form-label" for="sfMaps">Lien Google Maps <span class="fw-normal text-secondary">(optionnel)</span></label>
               <input type="url" class="form-control" id="sfMaps" placeholder="https://maps.app.goo.gl/...">
@@ -260,6 +265,28 @@
             </div>
           </div>
           <button type="submit" class="btn btn-fs w-100 mt-4"><i class="bi bi-check-lg me-1"></i>Enregistrer les informations</button>
+        </form>
+
+        <div class="mb-4 mt-5">
+          <h2 class="section-title fs-5 mb-1">Mon <span class="chrome-text">compte</span></h2>
+          <p class="text-secondary small mb-0" style="max-width:640px;">
+            Connecté en tant que <span id="accountEmail" class="text-white"></span>.
+            Changez votre mot de passe ici ; l'ancien n'est pas demandé car vous êtes déjà connecté.
+          </p>
+        </div>
+        <form onsubmit="submitPasswordChange(event)" style="max-width:420px;">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label" for="pwNew">Nouveau mot de passe *</label>
+              <input type="password" class="form-control" id="pwNew" minlength="8" autocomplete="new-password" required>
+              <div class="form-text">8 caractères minimum.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="pwConfirm">Confirmer *</label>
+              <input type="password" class="form-control" id="pwConfirm" minlength="8" autocomplete="new-password" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-fs w-100 mt-4"><i class="bi bi-key me-1"></i>Changer le mot de passe</button>
         </form>
       </div>
     </div>

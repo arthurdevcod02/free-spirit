@@ -21,6 +21,7 @@ const DEFAULT_SETTINGS = {
   phone: '+228 93 83 85 93',          // numéro affiché sur le site
   email: 'contact@freespirit.prod',
   address: 'Lomé, Togo',
+  legalName: '',                      // nom légal du vendeur (mentions légales)
   mapsUrl: '',                        // lien Google Maps de la boutique (optionnel)
   waProfile: '',                      // lien du profil WhatsApp (optionnel)
   tiktok: '',                         // pages réseaux sociaux (optionnelles)
@@ -30,9 +31,16 @@ const DEFAULT_SETTINGS = {
 
 const CATEGORIES = {
   tshirts: 'T-Shirts',
+  hoodies: 'Hoodies & Sweats',
   pantalons: 'Pantalons',
+  shorts: 'Shorts',
   chaussures: 'Chaussures',
+  casquettes: 'Casquettes',
   ceintures: 'Ceintures',
+  bijoux: 'Bijoux',
+  culottes: 'Culottes',
+  chaussettes: 'Chaussettes',
+  accessoires: 'Accessoires',
 };
 
 /* ==================== STOCKAGE ==================== */
@@ -144,7 +152,7 @@ const reelRow = r => ({
   createdAt: r.createdAt || new Date().toISOString(),
 });
 
-const SETTINGS_FIELDS = ['whatsapp', 'phone', 'email', 'address', 'mapsUrl', 'waProfile', 'tiktok', 'instagram', 'facebook'];
+const SETTINGS_FIELDS = ['whatsapp', 'phone', 'email', 'address', 'legalName', 'mapsUrl', 'waProfile', 'tiktok', 'instagram', 'facebook'];
 const settingsRow = s => ({
   id: 1,
   ...Object.fromEntries(SETTINGS_FIELDS.map(k => [k, s[k] || ''])),
@@ -430,6 +438,29 @@ function productCardHTML(p) {
       </div>
     </article>
   </div>`;
+}
+
+/* Une catégorie n'affiche son filtre que si au moins un article la
+   concerne : le catalogue reste lisible quand la gamme s'élargit. */
+function renderFilterChips() {
+  const wrap = document.getElementById('filterChips');
+  if (!wrap) return;
+  const used = [...new Set(state.products.map(p => p.category))];
+  const ordered = Object.keys(CATEGORIES).filter(k => used.includes(k))
+    .concat(used.filter(k => !CATEGORIES[k]));
+  wrap.innerHTML = [
+    `<button class="filter-chip active" data-filter="all">Tous</button>`,
+    ...ordered.map(k =>
+      `<button class="filter-chip" data-filter="${escapeHtml(k)}">${escapeHtml(CATEGORIES[k] || k)}</button>`),
+  ].join('');
+  wrap.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      wrap.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      state.filter = chip.dataset.filter;
+      renderProducts();
+    });
+  });
 }
 
 function renderProducts() {
@@ -915,15 +946,8 @@ async function initShop() {
   const reelTrack = document.getElementById('reelTrack');
   if (reelTrack) reelTrack.addEventListener('scroll', updateReelCounter, { passive: true });
 
-  // Filtres catégories
-  document.querySelectorAll('.filter-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      state.filter = chip.dataset.filter;
-      renderProducts();
-    });
-  });
+  // Filtres catégories : un seul filtre par catégorie réellement en vente.
+  renderFilterChips();
 
   // Navbar effet scroll
   const navbar = document.getElementById('mainNavbar');
@@ -966,6 +990,26 @@ async function initShop() {
   }
 
   observeReveals();
+}
+
+async function initLegal() {
+  await loadState();
+  const put = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+  put('legalVendor', state.settings.legalName || 'Free Spirit');
+  put('legalEmail', state.settings.email || 'Non renseigné pour le moment');
+  const addr = document.getElementById('legalAddress');
+  if (addr) {
+    if (state.settings.mapsUrl) {
+      addr.innerHTML = `<a class="red-text" href="${safeHref(state.settings.mapsUrl)}" target="_blank" rel="noopener">${escapeHtml(state.settings.address || 'Voir sur Google Maps')}</a>`;
+    } else {
+      addr.textContent = state.settings.address || 'Non renseignée pour le moment';
+    }
+  }
+  const tel = document.getElementById('legalPhone');
+  if (tel && state.settings.phone) {
+    tel.textContent = state.settings.phone;
+    tel.href = `tel:+${state.settings.whatsapp}`;
+  }
 }
 
 /* ==================== REVEAL AU SCROLL ==================== */
@@ -1023,6 +1067,8 @@ async function checkAdminGate() {
   if (who) who.innerHTML = unlocked
     ? `<i class="bi bi-person-check me-1"></i>${escapeHtml(session.user.email)}`
     : '';
+  const acct = document.getElementById('accountEmail');
+  if (acct) acct.textContent = unlocked ? session.user.email : '';
   if (!unlocked) return;
   await loadOrders();
   renderAdmin();
@@ -1054,6 +1100,19 @@ async function submitAdminLogin(e) {
   passwordInput.value = '';
   toast('Accès administrateur débloqué', 'success');
   await checkAdminGate();
+}
+
+async function submitPasswordChange(e) {
+  e.preventDefault();
+  const value = id => (document.getElementById(id)?.value || '').trim();
+  const next = value('pwNew');
+  if (next.length < 8) { toast('Mot de passe trop court (8 caractères minimum)'); return; }
+  if (next !== value('pwConfirm')) { toast('Les deux mots de passe ne correspondent pas'); return; }
+  const { error } = await sb.auth.updateUser({ password: next });
+  if (error) { toast('Mot de passe non changé : ' + error.message); return; }
+  document.getElementById('pwNew').value = '';
+  document.getElementById('pwConfirm').value = '';
+  toast('Mot de passe mis à jour', 'success');
 }
 
 async function adminLogout() {
@@ -1098,6 +1157,7 @@ function renderAdminShop() {
   field('sfPhone', state.settings.phone);
   field('sfEmail', state.settings.email);
   field('sfAddress', state.settings.address);
+  field('sfLegalName', state.settings.legalName);
   field('sfMaps', state.settings.mapsUrl);
   field('sfWaProfile', state.settings.waProfile);
   field('sfTiktok', state.settings.tiktok);
@@ -1136,6 +1196,7 @@ async function submitShopSettings(e) {
     phone,
     email,
     address: value('sfAddress'),
+    legalName: value('sfLegalName'),
     ...urls,
   };
   try {
@@ -1264,7 +1325,11 @@ function openProductForm(id = null) {
   const p = id ? state.products.find(pr => pr.id === id) : null;
   document.getElementById('productFormTitle').textContent = p ? 'Modifier le produit' : 'Ajouter un produit';
   document.getElementById('pfName').value = p ? p.name : '';
-  document.getElementById('pfCategory').value = p ? p.category : 'tshirts';
+  const catSel = document.getElementById('pfCategory');
+  catSel.innerHTML = Object.entries(CATEGORIES)
+    .map(([k, label]) => `<option value="${escapeHtml(k)}">${escapeHtml(label)}</option>`).join('');
+  catSel.value = p ? p.category : 'tshirts';
+  if (![...catSel.options].some(o => o.value === catSel.value)) catSel.selectedIndex = 0;
   document.getElementById('pfPrice').value = p ? p.price : '';
   document.getElementById('pfOldPrice').value = p && p.oldPrice ? p.oldPrice : '';
   document.getElementById('pfImage').value = p ? p.image : '';
@@ -1714,4 +1779,5 @@ document.addEventListener('DOMContentLoaded', () => {
   const page = document.body.dataset.page;
   if (page === 'shop') initShop();
   if (page === 'admin') initAdmin();
+  if (page === 'legal') initLegal();
 });
