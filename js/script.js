@@ -674,25 +674,27 @@ function submitReview(e) {
 /* ==================== VIDÉOS 9:16 (SHOWREEL) ====================
    Une carte = un visuel vertical qui joue en muet, avec un bouton qui
    renvoie vers la publication d'origine (TikTok, Instagram, YouTube).
-   Quand une vidéo ET un visuel existent, le visuel sert de bannière :
-   au survol (souris uniquement) il s'efface et laisse jouer un extrait. */
+   Le visuel de couverture est facultatif : sans lui la carte montre la
+   première image de la vidéo. Sur toutes les cartes vidéo, un clic (ou un
+   survol à la souris) lance un extrait ; au survol le visuel s'efface. */
 function reelCardHTML(r) {
-  const video = !!r.video;
+  const src = r.video || '';
+  const video = !!src;
   const preview = video && !!r.poster;
   const media = video
-    ? `<video src="${escapeHtml(r.video)}"${r.poster ? ` poster="${escapeHtml(r.poster)}"` : ''} muted loop playsinline preload="metadata"></video>${
+    ? `<video src="${escapeHtml(src)}"${r.poster ? ` poster="${escapeHtml(r.poster)}"` : ''} muted loop playsinline preload="metadata"></video>${
         preview ? `<img class="reel-still" src="${escapeHtml(r.poster)}" alt="${escapeHtml(r.title || '')}" loading="lazy">` : ''
       }`
     : `<img src="${escapeHtml(r.poster || '')}" alt="${escapeHtml(r.title || '')}" loading="lazy">`;
   return `
     <figure class="reel-card${preview ? ' has-preview' : ''}" data-reel="${escapeHtml(r.id)}">
       <div class="reel-media">${media}</div>
-      ${preview ? '<span class="reel-hint" aria-hidden="true"><i class="bi bi-play-fill"></i></span>' : ''}
+      ${video ? '<button type="button" class="reel-play" aria-label="Lire la vidéo"><i class="bi bi-play-fill"></i></button>' : ''}
       <figcaption class="reel-caption">
         ${r.title ? `<span class="reel-title">${escapeHtml(r.title)}</span>` : ''}
         ${r.link ? `<a class="reel-link" href="${escapeHtml(r.link)}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-1"></i>${escapeHtml(r.linkLabel || 'Voir la vidéo')}</a>` : ''}
       </figcaption>
-      ${video ? `<button type="button" class="reel-sound" onclick="toggleReelSound('${escapeHtml(r.id)}', this)" aria-label="Activer le son"><i class="bi bi-volume-mute"></i></button>` : ''}
+      ${video ? '<button type="button" class="reel-sound" aria-label="Activer le son"><i class="bi bi-volume-mute"></i></button>' : ''}
     </figure>`;
 }
 
@@ -700,10 +702,12 @@ function renderReels() {
   const section = document.getElementById('showreel');
   const track = document.getElementById('reelTrack');
   if (!section || !track) return;
-  const list = state.reels.filter(r => r.video || r.poster);
-  if (!list.length) { track.innerHTML = ''; section.classList.add('d-none'); return; }
+
+  const cards = state.reels.filter(r => r.video || r.poster).map(reelCardHTML);
+
+  if (!cards.length) { track.innerHTML = ''; section.classList.add('d-none'); return; }
   section.classList.remove('d-none');
-  track.innerHTML = list.map(reelCardHTML).join('');
+  track.innerHTML = cards.join('');
   updateReelCounter();
   observeReels();
 }
@@ -720,41 +724,105 @@ function observeReels() {
       const card = en.target;
       const v = card.querySelector('video');
       if (!v) return;
-      // À la souris, une carte avec bannière ne joue qu'au survol.
-      if (card.classList.contains('has-preview') && hasHover()) return;
-      if (en.isIntersecting && en.intersectionRatio >= .6) v.play().catch(() => {});
-      else v.pause();
+      if (en.isIntersecting && en.intersectionRatio >= .6) {
+        // À la souris, le démarrage est piloté par le survol et par le clic.
+        if (!hasHover()) v.play().catch(() => {});
+      } else {
+        v.pause();
+      }
     });
   }, { threshold: [0, .6, 1] });
   document.querySelectorAll('#reelTrack .reel-card').forEach(c => reelObserver.observe(c));
-  bindReelPreviews();
+  bindReelControls();
 }
 
-/* Survol = la bannière s'efface et l'extrait démarre ; on quitte = retour à la bannière. */
-function bindReelPreviews() {
-  if (!hasHover()) return;
-  document.querySelectorAll('#reelTrack .reel-card.has-preview').forEach(card => {
+/* L'icône suit l'état réel de la vidéo : survol, clic et défilement
+   automatique passent tous par les mêmes évènements de lecture. */
+function paintReelState(card, playing) {
+  card.classList.toggle('playing', playing);
+  const btn = card.querySelector('.reel-play');
+  if (!btn) return;
+  const icon = btn.querySelector('i');
+  if (icon) icon.className = `bi ${playing ? 'bi-pause-fill' : 'bi-play-fill'}`;
+  btn.setAttribute('aria-label', playing ? 'Mettre en pause' : 'Lire la vidéo');
+}
+
+function syncReelSound(card) {
+  const v = card.querySelector('video');
+  const btn = card.querySelector('.reel-sound');
+  if (!v || !btn) return;
+  const icon = btn.querySelector('i');
+  if (icon) icon.className = `bi ${v.muted ? 'bi-volume-mute' : 'bi-volume-up-fill'}`;
+  btn.setAttribute('aria-label', v.muted ? 'Activer le son' : 'Couper le son');
+}
+
+/* Un clic lance la lecture avec le son — le geste de l'utilisateur l'autorise.
+   Si le navigateur refuse, on retombe sur une lecture muette. */
+function toggleReel(target) {
+  const card = target.closest ? target.closest('.reel-card') : target;
+  const v = card && card.querySelector('video');
+  if (!v) return;
+  if (v.paused) {
+    delete card.dataset.hoverPlay;
+    v.muted = false;
+    v.play().then(() => syncReelSound(card), () => {
+      v.muted = true;
+      v.play().catch(() => {});
+      syncReelSound(card);
+    });
+  } else {
+    v.pause();
+    syncReelSound(card);
+  }
+}
+
+function bindReelControls() {
+  const hover = hasHover();
+  document.querySelectorAll('#reelTrack .reel-card').forEach(card => {
     const v = card.querySelector('video');
     if (!v) return;
+
+    v.addEventListener('play', () => paintReelState(card, true));
+    v.addEventListener('pause', () => paintReelState(card, false));
+
+    // Sans visuel, `preload="metadata"` ne peint pas forcément la 1re image :
+    // un décalage infime force l'affichage et évite une carte noire.
+    if (!v.poster) {
+      const seek = () => { try { v.currentTime = .001; } catch {} };
+      if (v.readyState >= 1) seek();
+      else v.addEventListener('loadedmetadata', seek, { once: true });
+    }
+
+    card.querySelector('.reel-play')?.addEventListener('click', e => {
+      e.stopPropagation();
+      toggleReel(card);
+    });
+    card.querySelector('.reel-sound')?.addEventListener('click', e => {
+      e.stopPropagation();
+      v.muted = !v.muted;
+      syncReelSound(card);
+      if (!v.muted && v.paused) v.play().catch(() => {});
+    });
+    // Un clic n'importe où sur la carte lance ou coupe la lecture.
+    card.addEventListener('click', e => {
+      if (e.target.closest('a, button')) return;
+      toggleReel(card);
+    });
+
+    if (!hover) return;
     card.addEventListener('mouseenter', () => {
+      if (!v.paused) return;
+      card.dataset.hoverPlay = '1';
       v.currentTime = 0;
       v.play().catch(() => {});
     });
     card.addEventListener('mouseleave', () => {
+      if (card.dataset.hoverPlay !== '1') return;
+      delete card.dataset.hoverPlay;
       v.pause();
       v.currentTime = 0;
     });
   });
-}
-
-function toggleReelSound(id, btn) {
-  const v = document.querySelector(`#reelTrack .reel-card[data-reel="${id}"] video`);
-  if (!v) return;
-  v.muted = !v.muted;
-  const icon = btn.querySelector('i');
-  if (icon) icon.className = `bi ${v.muted ? 'bi-volume-mute' : 'bi-volume-up-fill'}`;
-  btn.setAttribute('aria-label', v.muted ? 'Activer le son' : 'Couper le son');
-  if (!v.muted) v.play().catch(() => {});
 }
 
 function updateReelCounter() {
@@ -1368,10 +1436,12 @@ function renderAdminReels() {
   }
   tbody.innerHTML = state.reels.map(r => `
     <tr>
-      <td>${r.poster ? `<img class="thumb" src="${escapeHtml(r.poster)}" alt="">` : '<span class="text-secondary">—</span>'}</td>
+      <td>${r.poster
+        ? `<img class="thumb" src="${escapeHtml(r.poster)}" alt="">`
+        : r.video ? '<i class="bi bi-film text-secondary"></i>' : '<span class="text-secondary">—</span>'}</td>
       <td>
         <span class="t-name">${escapeHtml(r.title || 'Sans titre')}</span>
-        <br><small class="text-secondary">${r.video ? 'Vidéo 9:16' : 'Visuel fixe'}</small>
+        <br><small class="text-secondary">${r.video ? 'Lien externe' : 'Visuel fixe'}</small>
       </td>
       <td><small class="text-secondary">${r.link ? escapeHtml(r.linkLabel || 'Voir la vidéo') : 'Aucune redirection'}</small></td>
       <td class="text-nowrap">
@@ -1446,10 +1516,10 @@ function submitReelForm(e) {
   if (poster && !isSafeMediaSrc(poster, true)) { toast('Le visuel doit être un lien http(s), un fichier du site ou une image importée'); return; }
   if (link && !/^https?:\/\//i.test(link)) { toast('Le lien de redirection doit commencer par http:// ou https://'); return; }
 
+  const previous = editingReelId ? state.reels.find(x => x.id === editingReelId) : null;
   const data = { title, video, poster, link, linkLabel };
-  if (editingReelId) {
-    const idx = state.reels.findIndex(x => x.id === editingReelId);
-    state.reels[idx] = { ...state.reels[idx], ...data };
+  if (previous) {
+    Object.assign(previous, data);
     toast('Vidéo modifiée', 'success');
   } else {
     state.reels.push({ id: uid(), ...data });

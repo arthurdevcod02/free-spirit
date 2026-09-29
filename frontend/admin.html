@@ -161,9 +161,13 @@
           La vidéo doit être hébergée quelque part (URL directe en <code>.mp4</code>, ou ton lien TikTok / Instagram
           dans « Redirige vers »). Tant qu'aucune vidéo n'est enregistrée, la section reste masquée.<br>
           <i class="bi bi-cursor me-1"></i>
-          Si tu renseignes <b>à la fois</b> une vidéo et un visuel, le visuel sert de bannière :
-          au survol sur ordinateur il s'efface et laisse jouer un extrait de la vidéo.
-          Sur téléphone, la vidéo se lance toute seule dès que la carte est à l'écran.
+          Sur ordinateur, un extrait de la vidéo se lance au survol de <b>chaque</b> carte, avec ou sans visuel.
+          Un clic lance la lecture complète avec le son, un second clic la met en pause.<br>
+          <i class="bi bi-phone me-1"></i>
+          Sur téléphone, la vidéo démarre seule en muet dès que la carte est à l'écran, et le bouton
+          lecture au centre permet de la lancer avec le son.<br>
+          <i class="bi bi-image me-1"></i>
+          Le visuel de couverture reste facultatif : sans lui, la carte affiche la première image de la vidéo.
         </p>
       </div>
 
@@ -399,16 +403,22 @@
         <div class="modal-body">
           <form onsubmit="submitReelForm(event)">
             <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label" for="rfTitle">Titre</label>
+              <div class="col-12">
+                <label class="form-label" for="rfTitle">Titre <span class="fw-normal text-secondary">— facultatif</span></label>
                 <input type="text" class="form-control" id="rfTitle" placeholder="Défilé Lomé — backstage" maxlength="60">
               </div>
-              <div class="col-md-6">
-                <label class="form-label" for="rfVideo">URL de la vidéo <span class="fw-normal text-secondary">(.mp4 hébergé)</span></label>
-                <input type="text" class="form-control" id="rfVideo" placeholder="https://exemple.com/defile.mp4">
-              </div>
+
               <div class="col-12">
-                <label class="form-label" for="rfPoster">Visuel de couverture <span class="fw-normal text-secondary">(image verticale, affichée avant lecture)</span></label>
+                <label class="form-label" for="rfVideo">La vidéo à afficher <span class="fw-normal text-secondary">— lien direct vers un fichier hébergé</span></label>
+                <input type="text" class="form-control" id="rfVideo" placeholder="https://exemple.com/defile.mp4">
+                <div class="form-text">
+                  Lien <b>direct</b> vers un fichier vidéo hébergé (<code>.mp4</code>). Un lien de profil ou de
+                  publication TikTok ne se lit pas ici : mets-le dans « Redirige vers » ci-dessous.
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label" for="rfPoster">Visuel de couverture <span class="fw-normal text-secondary">— facultatif, image verticale</span></label>
                 <div class="row g-2">
                   <div class="col-md-7">
                     <input type="text" class="form-control" id="rfPoster" placeholder="https://exemple.com/couverture.jpg">
@@ -418,13 +428,23 @@
                     <div class="form-text">Fichier local : 2 Mo max.</div>
                   </div>
                 </div>
+                <div class="form-text">
+                  Facultatif. Sur ordinateur il sert de bannière : au survol il s'efface et laisse jouer un
+                  extrait de la vidéo. Sans visuel, la carte affiche la première image de la vidéo avec un
+                  bouton lecture au centre. Sur téléphone la vidéo démarre seule, sans bannière.
+                </div>
                 <div class="pf-image-preview" id="rfPosterPreviewWrap">
                   <img id="rfPosterPreview" alt="Aperçu du visuel">
                 </div>
               </div>
+
               <div class="col-md-8">
-                <label class="form-label" for="rfLink">Redirige vers <span class="fw-normal text-secondary">(TikTok, Instagram, YouTube...)</span></label>
-                <input type="text" class="form-control" id="rfLink" placeholder="https://www.tiktok.com/@freespirit/video/...">
+                <label class="form-label" for="rfLink">Redirige vers <span class="fw-normal text-secondary">— facultatif</span></label>
+                <input type="text" class="form-control" id="rfLink" placeholder="https://www.tiktok.com/@freespirit">
+                <div class="form-text">
+                  Ton profil TikTok / Instagram, ou une publication précise. Un bouton s'affiche sur la carte
+                  et s'ouvre dans un nouvel onglet. Laisse vide : aucun bouton ne sera affiché.
+                </div>
               </div>
               <div class="col-md-4">
                 <label class="form-label" for="rfLinkLabel">Texte du bouton</label>
@@ -433,8 +453,8 @@
             </div>
             <p class="text-secondary small mt-3 mb-0">
               <i class="bi bi-info-circle me-1"></i>
-              La vidéo se lance toute seule en muet quand elle est à l'écran. Sans URL de vidéo, la carte
-              affiche simplement le visuel de couverture.
+              Seul un des deux est obligatoire : une vidéo, <b>ou</b> un visuel. Une vidéo sans visuel se lit
+              directement via le bouton au centre de la carte. Sans vidéo, la carte affiche le visuel fixe.
             </p>
             <button type="submit" class="btn btn-fs w-100 mt-4"><i class="bi bi-check-lg me-1"></i>Enregistrer la vidéo</button>
           </form>

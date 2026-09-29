@@ -946,6 +946,7 @@ body::after {
   max-height: 180px;
   object-fit: contain;
 }
+
 .admin-shell { min-height: 100vh; padding-bottom: 4rem; }
 .admin-topbar {
   background: rgba(11,11,11,.9);
@@ -1277,6 +1278,7 @@ body::after {
   scroll-snap-align: center;
   background: var(--noir-3);
   border: 1px solid rgba(255,255,255,.12);
+  cursor: pointer;
 }
 .reel-media { position: absolute; inset: 0; }
 .reel-media > video,
@@ -1292,31 +1294,48 @@ body::after {
 /* Bannière fixe qui masque la vidéo jusqu'au survol.
    N'existe que là où le survol existe : au doigt elle masquerait la vidéo pour toujours. */
 .reel-still { display: none; transition: opacity .45s ease; }
-.reel-hint {
+
+/* Bouton lecture : présent sur toutes les cartes vidéo, au doigt comme à la souris. */
+.reel-play {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  width: 54px; height: 54px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255,255,255,.4);
+  width: 58px; height: 58px;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.45);
   border-radius: 50%;
-  background: rgba(11,11,11,.5);
+  background: rgba(11,11,11,.55);
   color: var(--blanc);
-  font-size: 1.5rem;
+  font-size: 1.7rem;
   line-height: 1;
+  cursor: pointer;
+  transition: opacity .3s ease, transform .3s ease, background .2s ease, border-color .2s ease;
+}
+.reel-play .bi-play-fill { margin-left: .16em; }
+.reel-play:hover,
+.reel-play:focus-visible {
+  background: var(--rouge);
+  border-color: var(--rouge);
+  outline: none;
+}
+.reel-card.playing .reel-still { opacity: 0; }
+.reel-card.playing .reel-play {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(.75);
   pointer-events: none;
-  display: none;
-  transition: opacity .35s ease, transform .35s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .reel-still { display: block; }
-  .reel-hint { display: inline-flex; }
   .reel-card.has-preview:hover .reel-still { opacity: 0; }
-  .reel-card.has-preview:hover .reel-hint {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(.75);
+  /* Survoler une carte en lecture fait réapparaître le bouton pause. */
+  .reel-card.playing:hover .reel-play {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
   }
 }
 .reel-caption {
