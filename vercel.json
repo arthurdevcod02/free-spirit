@@ -1,7 +1,10 @@
 {
-  "cleanUrls": true,
   "rewrites": [
-    { "source": "/", "destination": "/frontend" }
+    { "source": "/", "destination": "/frontend/index.html" },
+    { "source": "/index.html", "destination": "/frontend/index.html" },
+    { "source": "/mentions-legales.html", "destination": "/frontend/mentions-legales.html" },
+    { "source": "/confidentialite.html", "destination": "/frontend/confidentialite.html" },
+    { "source": "/admin.html", "destination": "/frontend/admin.html" }
   ],
   "headers": [
     {
@@ -11,6 +14,13 @@
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
         { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    },
+    {
+      "source": "/admin.html",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Content-Security-Policy", "value": "frame-ancestors 'none'" }
       ]
     },
     {
