@@ -1,5 +1,5 @@
 /* ============================================================
-   FREE SPIRIT — Dark Luxury / Y2K / Brutalisme
+   FREE SPIRIT · Dark Luxury / Y2K / Brutalisme
    Design System & Effets visuels
    ============================================================ */
 
@@ -201,6 +201,7 @@ body::after {
   height: 38px;
   display: flex;
   align-items: center;
+  background: var(--noir);
   border-top: 1px solid rgba(255,255,255,.12);
   border-bottom: 1px solid rgba(255,255,255,.12);
   color: rgba(244,244,242,.55);
@@ -224,7 +225,7 @@ body::after {
   border-bottom: 1px solid transparent;
 }
 .fs-navbar.scrolled {
-  background: rgba(11,11,11,.82);
+  background: rgba(11,11,11,.96);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   padding: .65rem 0;
@@ -337,13 +338,7 @@ body::after {
   pointer-events: none;
 }
 .hero-star-2 {
-  position: absolute;
-  width: clamp(60px, 7vw, 110px);
-  left: 6%;
-  bottom: 14%;
-  opacity: .85;
-  animation: floatY 9s ease-in-out infinite reverse;
-  pointer-events: none;
+  display: none;
 }
 @keyframes floatY {
   0%, 100% { transform: translateY(0) rotate(0deg); }
@@ -380,7 +375,7 @@ body::after {
   position: absolute;
   bottom: 2rem; left: 50%;
   transform: translateX(-50%);
-  color: rgba(244,244,242,.45);
+  color: rgba(244,244,242,.58);
   font-size: .68rem;
   letter-spacing: .35em;
   text-transform: uppercase;
@@ -810,6 +805,10 @@ body::after {
 .fs-footer {
   border-top: 1px solid rgba(255,255,255,.1);
   background: #080808;
+}
+.fs-footer .text-secondary { color: rgba(244,244,242,.76) !important; }
+@media (min-width: 768px) {
+  .footer-bottom { padding-right: 5.5rem; }
 }
 .footer-giant {
   font-family: var(--font-display);
@@ -1350,7 +1349,7 @@ body::after {
 .reel-sound:hover { color: var(--rouge); border-color: var(--rouge); }
 
 /* ============================================================
-   RESPONSIVE — Tablettes (≤ 991.98px)
+   RESPONSIVE · Tablettes (≤ 991.98px)
    ============================================================ */
 @media (max-width: 991.98px) {
   .hero { padding: 8.5rem 0 4.5rem; }
@@ -1360,7 +1359,7 @@ body::after {
 }
 
 /* ============================================================
-   RESPONSIVE — Mobiles (≤ 767.98px)
+   RESPONSIVE · Mobiles (≤ 767.98px)
    ============================================================ */
 @media (max-width: 767.98px) {
   [id] { scroll-margin-top: 104px; }
@@ -1369,7 +1368,6 @@ body::after {
   .hero-title { font-size: clamp(2.9rem, 13vw, 5rem); }
   .hero-manifesto { font-size: .68rem; line-height: 1.95; letter-spacing: .14em; }
   .hero-star { right: 3%; top: 9%; width: 96px; opacity: .55; animation: none; }
-  .hero-star-2 { left: 5%; bottom: 10%; width: 54px; opacity: .45; animation: none; }
   .hero-logo-bg { width: 100vw; right: -22%; opacity: .1; }
   .hero .btn-fs, .hero .btn-ghost-fs { width: 100%; justify-content: center; }
   .scroll-hint { display: none; }
@@ -1377,7 +1375,7 @@ body::after {
 
   .marquee-red { font-size: .78rem; padding: .55rem 0; }
 
-  .section-title.display-5 { font-size: 1.9rem; }
+  .section-title.display-5 { font-size: 1.8rem; max-width: calc(100% - 3.5rem); }
   .label-tag { font-size: .64rem; }
 
   .promo-strip { font-size: .68rem; line-height: 2; }
@@ -1422,7 +1420,7 @@ body::after {
 }
 
 /* ============================================================
-   RESPONSIVE — Petits mobiles (≤ 575.98px)
+   RESPONSIVE · Petits mobiles (≤ 575.98px)
    ============================================================ */
 @media (max-width: 575.98px) {
   .fs-navbar .font-display { font-size: .8rem !important; }
@@ -1453,8 +1451,8 @@ body::after {
 /* Très petits écrans (≤ 400px) */
 @media (max-width: 400px) {
   .hero-title { font-size: 2.35rem; }
-  .filter-chip { font-size: .58rem; padding: .42rem .8rem; }
-  .pc-actions .btn-add { font-size: .55rem; }
+  .filter-chip { font-size: .66rem; padding: .5rem .9rem; }
+  .pc-actions .btn-add { font-size: .6rem; }
 }
 
 /* Téléphones en mode paysage / écrans courts */
@@ -1462,4 +1460,105 @@ body::after {
   .hero { min-height: auto; padding: 7.5rem 0 3rem; }
   .scroll-hint { display: none; }
   .admin-gate { min-height: 100vh; padding: 2rem 0; }
+}
+
+/* ============================================================
+   CONFORT TACTILE · Mobiles
+   Zones de touche de 44 px minimum, texte lisible, pas de zoom iOS
+   ============================================================ */
+@media (max-width: 767.98px) {
+  .nav-icon-btn { width: 44px; height: 44px; font-size: 1.05rem; }
+
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: .55rem 1.1rem;
+    font-size: .7rem;
+  }
+
+  .size-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    min-height: 44px;
+    padding: .5rem .7rem;
+    font-size: .8rem;
+  }
+
+  .qty-stepper button { width: 44px; height: 44px; font-size: 1rem; }
+  .qty-stepper span { min-width: 34px; font-size: .9rem; }
+
+  .ci-remove {
+    width: 44px; height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: -.4rem;
+  }
+
+  .pc-actions .btn { min-height: 44px; font-size: .64rem; padding: .5rem .35rem; }
+  .pc-actions .btn-view { flex: 0 0 44px; }
+
+  .btn-fs, .btn-chrome, .btn-ghost-fs {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .footer-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .social-link { width: 44px; height: 44px; }
+  body[data-page="shop"] .fs-footer { padding-bottom: 6.5rem; }
+
+  .btn-review-toggle { min-height: 44px; }
+  .star-btn {
+    width: 44px; height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+  }
+
+  .fs-dark .form-control,
+  .fs-dark .form-select { font-size: 16px; }
+
+  .hero-manifesto { font-size: .76rem; letter-spacing: .1em; line-height: 1.95; }
+  .hero-manifesto b { white-space: nowrap; }
+
+  .icon-action { width: 40px; height: 40px; }
+
+  .offcanvas-header .btn-close,
+  .modal-header .btn-close {
+    width: 44px;
+    height: 44px;
+    padding: .7rem;
+    background-size: 1rem;
+  }
+
+  .fs-dark .form-text { color: rgba(244,244,242,.68); }
+
+  #applyPromo { min-height: 48px; padding-inline: 1rem; }
+  #promoInput { min-height: 48px; }
+  #cartOffcanvas .btn-link { min-height: 44px; }
+}
+
+/* Sur écran tactile, pas d'effet de survol qui reste bloqué après le tap */
+@media (hover: none) {
+  .product-card:hover {
+    transform: none;
+    border-color: rgba(255,255,255,.08);
+    box-shadow: none;
+  }
+  .product-card:hover .pc-media img { transform: none; filter: none; }
+  .product-card:active { transform: scale(.985); border-color: rgba(255,255,255,.35); }
+  .pc-actions .btn:active,
+  .size-pill:active,
+  .filter-chip:active,
+  .social-link:active { transform: scale(.96); }
 }

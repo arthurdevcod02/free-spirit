@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FREE SPIRIT — L'essence du Streetwear Moderne</title>
-  <meta name="description" content="Free Spirit — streetwear haut de gamme. Au-delà des limites. Release your energy. T-shirts, pantalons, chaussures, ceintures.">
+  <title>FREE SPIRIT · L'essence du Streetwear moderne</title>
+  <meta name="description" content="Free Spirit, streetwear haut de gamme. Au-delà des limites. Release your energy. T-shirts, pantalons, chaussures, ceintures.">
   <link rel="canonical" href="https://free-spirit-rho.vercel.app/">
 
   <!-- Aperçu enrichi quand l'URL est partagée (Google, réseaux sociaux) -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="FREE SPIRIT">
-  <meta property="og:title" content="FREE SPIRIT — L'essence du Streetwear Moderne">
+  <meta property="og:title" content="FREE SPIRIT · L'essence du Streetwear moderne">
   <meta property="og:description" content="Streetwear haut de gamme. Au-delà des limites. Release your energy.">
   <meta property="og:url" content="https://free-spirit-rho.vercel.app/">
   <meta property="og:image" content="https://free-spirit-rho.vercel.app/assets/images/logo-gothic.jpg">
@@ -34,7 +34,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- Design System Free Spirit -->
   <link rel="stylesheet" href="../css/style.css">
-  <link rel="icon" type="image/png" href="../assets/images/etoile-fs.png">
+  <link rel="icon" type="image/png" href="../assets/images/etoile-fs-icon.png">
 </head>
 
 <body data-page="shop">
@@ -62,7 +62,7 @@
   <nav class="fs-navbar" id="mainNavbar">
     <div class="container d-flex align-items-center justify-content-between">
       <a href="#hero" class="d-flex align-items-center gap-2 text-decoration-none">
-        <img src="../assets/images/etoile-fs.png" alt="Free Spirit" width="34" height="34">
+        <img src="../assets/images/etoile-fs-icon.png" alt="Free Spirit" width="34" height="34">
         <span class="font-display fw-bold text-white" style="font-size:.95rem; letter-spacing:.12em;">FREE <span class="chrome-text">SPIRIT</span></span>
       </a>
 
@@ -91,13 +91,14 @@
     </div>
   </nav>
 
+  <main>
   <!-- ============ HERO ============ -->
   <header class="hero" id="hero">
     <div class="hero-glow"></div>
     <div class="hero-glow-2"></div>
-    <img class="hero-logo-bg" src="../assets/images/logo-gothic.jpg" alt="">
-    <img class="hero-star" src="../assets/images/etoile-fs.png" alt="Étoile chromée Free Spirit">
-    <img class="hero-star-2" src="../assets/images/etoile-fs.png" alt="">
+    <img class="hero-logo-bg" src="../assets/images/logo-gothic.webp" alt="">
+    <img class="hero-star" src="../assets/images/etoile-fs.webp" alt="Étoile chromée Free Spirit">
+    <img class="hero-star-2" src="../assets/images/etoile-fs.webp" alt="">
 
     <div class="container position-relative" style="z-index:2;">
       <div class="row">
@@ -108,9 +109,9 @@
             <span class="line"><span class="outline-text">SPIRIT</span></span>
           </h1>
           <p class="hero-manifesto mb-4">
-            <b class="red">au-delà des limites.</b> — Release your energy.<br>
+            <b class="red">au-delà des limites.</b> Release your energy.<br>
             ambitious and talented which praised <b class="red">SEXY AURA</b>,<br>
-            un rêve de devenir — <b>stay real, keep it 100</b>,<br>
+            un rêve de devenir : <b>stay real, keep it 100</b>,<br>
             turn unbeliever to believer.
           </p>
           <div class="d-flex flex-wrap gap-3">
@@ -158,7 +159,7 @@
         <div class="col-lg-5 reveal">
           <div class="about-wrap position-relative">
             <div class="about-media">
-              <img src="../assets/images/manifeste.jpg" alt="Manifeste officiel Free Spirit">
+              <img src="../assets/images/manifeste.webp" alt="Manifeste officiel Free Spirit">
             </div>
             <div class="about-frame"></div>
           </div>
@@ -177,7 +178,7 @@
           <p class="text-secondary mt-4 small lh-lg reveal reveal-delay-2" style="max-width:560px;">
             Chaque pièce Free Spirit est pensée comme une armure chromée : des matières lourdes,
             des étoiles métalliques, des coupes qui libèrent le mouvement. Le dark luxury n'est pas
-            un style — c'est un état d'esprit.
+            un style : c'est un état d'esprit.
           </p>
         </div>
       </div>
@@ -194,12 +195,13 @@
         </div>
         <div class="text-end flex-shrink-0">
           <div class="reel-counter" id="reelCounter">1 / 1</div>
-          <small class="text-secondary"><i class="bi bi-arrow-left-right me-1"></i>Fais défiler</small>
+          <small class="text-secondary"><i class="bi bi-arrow-left-right me-1"></i>Faites défiler</small>
         </div>
       </div>
     </div>
     <div class="reel-track" id="reelTrack"></div>
   </section>
+  </main>
 
   <!-- ============ FOOTER / CONTACT ============ -->
   <footer class="fs-footer pt-5" id="contact">
@@ -209,16 +211,16 @@
       </div>
       <div class="row g-4 pb-4">
         <div class="col-md-4">
-          <h6 class="font-display fw-bold text-uppercase mb-3" style="font-size:.8rem; letter-spacing:.2em;">Contact direct</h6>
+          <h2 class="h6 font-display fw-bold text-uppercase mb-3" style="font-size:.8rem; letter-spacing:.2em;">Contact direct</h2>
           <div class="d-flex flex-column gap-2">
-            <a id="contactWhatsApp" href="#" target="_blank" rel="noopener" class="footer-link"><i class="bi bi-whatsapp me-2"></i>WhatsApp — réponse rapide</a>
-            <a href="tel:+22893838593" class="footer-link" id="phoneFooterLink"><i class="bi bi-telephone me-2"></i><span id="phoneLabel">+228 93 83 85 93</span></a>
-            <a href="mailto:contact@freespirit.prod" class="footer-link" id="emailFooterLink"><i class="bi bi-envelope me-2"></i><span id="emailLabel">contact@freespirit.prod</span></a>
+            <a id="contactWhatsApp" href="#" target="_blank" rel="noopener" class="footer-link"><i class="bi bi-whatsapp me-2"></i>WhatsApp : réponse rapide</a>
+            <a href="#" class="footer-link" id="phoneFooterLink"><i class="bi bi-telephone me-2"></i><span id="phoneLabel">Téléphone</span></a>
+            <a href="#" class="footer-link" id="emailFooterLink"><i class="bi bi-envelope me-2"></i><span id="emailLabel">Email</span></a>
             <a href="#" target="_blank" rel="noopener" class="footer-link" id="mapsFooterLink"><i class="bi bi-geo-alt me-2"></i><span id="addressLabel">Lomé, Togo</span></a>
           </div>
         </div>
         <div class="col-md-4">
-          <h6 class="font-display fw-bold text-uppercase mb-3" style="font-size:.8rem; letter-spacing:.2em;">Navigation</h6>
+          <h2 class="h6 font-display fw-bold text-uppercase mb-3" style="font-size:.8rem; letter-spacing:.2em;">Navigation</h2>
           <div class="d-flex flex-column gap-2">
             <a href="#collection" class="footer-link">Collection</a>
             <a href="#apropos" class="footer-link">Manifeste</a>
@@ -228,7 +230,7 @@
           </div>
         </div>
         <div class="col-md-4">
-          <h6 class="font-display fw-bold text-uppercase mb-3" style="font-size:.8rem; letter-spacing:.2em;">L'univers</h6>
+          <h2 class="h6 font-display fw-bold text-uppercase mb-3" style="font-size:.8rem; letter-spacing:.2em;">L'univers</h2>
           <p class="text-secondary small lh-lg mb-0">
             Dark luxury · Y2K · Brutalisme. Paiement à la livraison ou sur confirmation WhatsApp.
             Livraison suivie partout. Stay real, keep it 100.
@@ -241,8 +243,8 @@
         </div>
       </div>
       <hr class="divider-chrome">
-      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 py-3">
-        <small class="text-secondary">© 2026 FREE SPIRIT PRODUCTION — Turn unbeliever to believer.</small>
+      <div class="footer-bottom d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 py-3">
+        <small class="text-secondary">© 2026 FREE SPIRIT PRODUCTION. Turn unbeliever to believer.</small>
         <a href="admin.html" class="footer-link" style="font-size:.7rem;"><i class="bi bi-shield-lock me-1"></i>Espace administrateur</a>
       </div>
     </div>
@@ -250,7 +252,7 @@
 
   <!-- ============ BOUTONS FLOTTANTS ============ -->
   <div class="float-actions">
-    <a class="float-btn phone" id="phoneFloat" href="tel:+22893838593" title="Appel direct"><i class="bi bi-telephone-fill"></i></a>
+    <a class="float-btn phone" id="phoneFloat" href="#" title="Appel direct"><i class="bi bi-telephone-fill"></i></a>
     <a class="float-btn wa" id="waFloat" href="#" target="_blank" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>
   </div>
 
@@ -262,7 +264,7 @@
     </div>
     <div class="offcanvas-body d-flex flex-column">
       <div id="cartItems" class="flex-grow-1" style="overflow-y:auto;"></div>
-      <div class="pt-3">
+      <div class="pt-3" id="cartFooter">
         <div class="input-group mb-2">
           <input type="text" class="form-control text-uppercase" id="promoInput" placeholder="Code promo" style="border-radius:0;">
           <button class="btn btn-outline-light text-uppercase" id="applyPromo" style="border-radius:0; font-size:.75rem; letter-spacing:.1em;">Appliquer</button>
@@ -270,13 +272,13 @@
         <div id="promoFeedback" class="small mb-2" style="min-height:1.2em;"></div>
         <div id="cartTotals" class="mb-3"></div>
         <div class="mb-2">
-          <label class="form-label" for="customerName">Ton nom</label>
+          <label class="form-label" for="customerName">Votre nom</label>
           <input type="text" class="form-control" id="customerName" placeholder="Ex. Kossi" autocomplete="name" maxlength="60">
         </div>
         <div class="mb-3">
-          <label class="form-label" for="customerWhatsapp">Ton numéro WhatsApp</label>
+          <label class="form-label" for="customerWhatsapp">Votre numéro WhatsApp</label>
           <input type="tel" class="form-control" id="customerWhatsapp" placeholder="Ex. +228 90 00 00 00" autocomplete="tel" maxlength="25">
-          <div class="form-text">Il part avec ta commande pour qu'on puisse te recontacter.</div>
+          <div class="form-text">Il accompagne votre commande pour vous recontacter.</div>
         </div>
         <button class="btn btn-chrome w-100 mb-2" id="checkoutWhatsApp" onclick="checkoutCartViaWhatsApp()">
           <i class="bi bi-whatsapp me-2"></i>Commander via WhatsApp

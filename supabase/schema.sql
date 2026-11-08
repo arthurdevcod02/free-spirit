@@ -199,37 +199,7 @@ create policy "media_gestion_admin" on storage.objects
 
 
 -- ============================================================
---  4. DONNÉES DE DÉMO
---  Exactement ce que le site affiche déjà aujourd'hui : tout est
---  FICTIF (numéro WhatsApp, email, 5 produits, 3 codes promo).
---  Rien n'est écrasé si tu relances ce fichier après avoir fait
---  tes propres modifications.
---  → Ces lignes seront supprimées avant la mise en ligne.
--- ============================================================
-
-insert into public.products (id, name, category, price, "oldPrice", image, sizes, "desc", "createdAt") values
-  ('p-meteor',     'METEOR BELT',      'ceintures',   18000, null,  '../assets/images/ceinture-etoile.png',   array['Unique'],                 'Ceinture cuir noir pleine fleur, boucle étoile FS en chrome poli miroir. La pièce qui turn unbeliever to believer.', '2026-01-01 10:00:00+00'),
-  ('p-aura',       'AURA RUNNER',      'chaussures',  65000, null,  '../assets/images/sneakers-chrome.png',    array['40','41','42','43','44','45'], 'Sneakers chunky noir/chrome, empiècements métalliques liquides et étoile FS sur le flanc. Release your energy à chaque pas.', '2026-01-02 10:00:00+00'),
-  ('p-limitless',  'LIMITLESS CARGO',  'pantalons',   45000, 58000, '../assets/images/pantalon-cargo.png',    array['S','M','L','XL'],         'Cargo noir multi-poches, hardware étoile chromé. Coupe ample, toile technique dense. Au-delà des limites.', '2026-01-03 10:00:00+00'),
-  ('p-chromestar', 'CHROME STAR TEE',  'tshirts',     28000, null,  '../assets/images/tee-noir.png',           array['S','M','L','XL','XXL'],   'Tee noir oversize, étoile chromée liquide sérigraphiée sur la poitrine. L''essence du streetwear moderne. Stay real, keep it 100.', '2026-01-04 10:00:00+00'),
-  ('p-overtone',   'OVERTONE TEE',     'tshirts',     25000, 30000, '../assets/images/tee-sans-manches.jpg',  array['XS','S','M','L','XL'],    'T-shirt sans manches blanc cassé, logo FREE SPIRIT chromé en métal liquide. Coupe boxy, coton lourd 240gsm. Ambitious and talented — SEXY AURA garantie.', '2026-01-05 10:00:00+00')
-on conflict (id) do nothing;
-
-insert into public.promos (id, code, type, value, active, "createdAt") values
-  ('promo-real',    'STAYREAL',  'fixed',   5000, true, '2026-01-01 10:00:00+00'),
-  ('promo-aura',    'AURA25',    'percent',   25, true, '2026-01-02 10:00:00+00'),
-  ('promo-welcome', 'WELCOME10', 'percent',   10, true, '2026-01-03 10:00:00+00')
-on conflict (id) do nothing;
-
-insert into public.settings
-  (id, whatsapp, phone, email, address, "mapsUrl", "waProfile", tiktok, instagram, facebook)
-values
-  (1, '22893838593', '+228 93 83 85 93', 'contact@freespirit.prod', 'Lomé, Togo', '', '', '', '', '')
-on conflict (id) do nothing;
-
-
--- ============================================================
---  5. VÉRIFICATION — ce que tu dois voir après RUN
+--  4. VÉRIFICATION — ce que tu dois voir après RUN
 -- ============================================================
 
 select 'products' as nom, count(*) as lignes from public.products

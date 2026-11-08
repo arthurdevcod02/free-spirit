@@ -1,5 +1,5 @@
 /* ============================================================
-   FREE SPIRIT — Logique interactive
+   FREE SPIRIT · Logique interactive
    Boutique (index.html) + Administration (admin.html)
    Données dans Supabase ; le panier reste sur l'appareil du visiteur
    ============================================================ */
@@ -17,14 +17,14 @@ const CONFIG = {
 
 // Infos de la boutique : modifiables par l'admin dans admin.html > onglet « Boutique »
 const DEFAULT_SETTINGS = {
-  whatsapp: '22893838593',            // numéro WhatsApp, format international sans "+"
-  phone: '+228 93 83 85 93',          // numéro affiché sur le site
-  email: 'contact@freespirit.prod',
+  whatsapp: '22878019857',            // numéro WhatsApp, format international sans "+"
+  phone: '+228 78 01 98 57',          // numéro affiché sur le site
+  email: 'marcomiller517@gmail.com',
   address: 'Lomé, Togo',
-  legalName: '',                      // nom légal du vendeur (mentions légales)
+  legalName: 'Marco Miller',          // nom légal du vendeur (mentions légales)
   mapsUrl: '',                        // lien Google Maps de la boutique (optionnel)
-  waProfile: '',                      // lien du profil WhatsApp (optionnel)
-  tiktok: '',                         // pages réseaux sociaux (optionnelles)
+  waProfile: 'https://wa.me/qr/IKTPA5G5EFGGO1', // lien du profil WhatsApp (optionnel)
+  tiktok: 'https://www.tiktok.com/@free.spirit8319?_r=1&_t=ZS-9A93tAdLjVM', // pages réseaux sociaux (optionnelles)
   instagram: '',
   facebook: '',
 };
@@ -168,12 +168,19 @@ async function loadState() {
       fetchRows('reels'), fetchRows('settings'),
     ]);
     state.products = products.sort(newest());
+    // Un article supprimé de la boutique ne doit pas rester dans un panier enregistré.
+    const available = new Set(state.products.map(p => p.id));
+    const kept = state.cart.filter(item => available.has(item.id));
+    if (kept.length !== state.cart.length) {
+      state.cart = kept;
+      saveCart();
+    }
     state.promos = promos.sort(newest());
     state.reviews = reviews.sort(newest());
     state.reels = reels.sort(oldest());
     state.settings = { ...DEFAULT_SETTINGS, ...(settings[0] || {}) };
   } catch (error) {
-    dbFail(error, 'Boutique indisponible : les articles ne peuvent pas être chargés. Vérifie ta connexion Internet.');
+    dbFail(error, 'Boutique indisponible : les articles ne peuvent pas être chargés. Vérifiez votre connexion Internet.');
   }
 }
 
@@ -325,10 +332,10 @@ function openWhatsApp(text) {
 
 function buildOrderMessage(items, promo, totals, title) {
   const lines = [];
-  lines.push(`*FREE SPIRIT — ${title}*`);
+  lines.push(`*FREE SPIRIT · ${title}*`);
   lines.push('━━━━━━━━━━━━━━━');
   items.forEach(it => {
-    lines.push(`▪ ${it.name} (Taille ${it.size}) x${it.qty} — ${fmt(it.price * it.qty)}`);
+    lines.push(`▪ ${it.name} (Taille ${it.size}) x${it.qty} · ${fmt(it.price * it.qty)}`);
   });
   lines.push('━━━━━━━━━━━━━━━');
   lines.push(`Sous-total : ${fmt(totals.subtotal)}`);
@@ -338,11 +345,11 @@ function buildOrderMessage(items, promo, totals, title) {
   lines.push(`*TOTAL : ${fmt(totals.total)}*`);
   if (state.customer.name || state.customer.whatsapp) {
     lines.push('');
-    lines.push(`Client : ${state.customer.name || '—'}`);
+    lines.push(`Client : ${state.customer.name || 'non renseigné'}`);
     if (state.customer.whatsapp) lines.push(`WhatsApp : ${state.customer.whatsapp}`);
   }
   lines.push('');
-  lines.push('Free Spirit — au-delà des limites.');
+  lines.push('Free Spirit, au-delà des limites.');
   return lines.join('\n');
 }
 
@@ -377,7 +384,7 @@ function checkoutCartViaWhatsApp() {
   openWhatsApp(message);
   registerOrder(items, { subtotal, discount, total: subtotal - discount });
   clearCartSilent();
-  toast('Commande transmise sur WhatsApp — merci !', 'success');
+  toast('Commande transmise sur WhatsApp. Merci !', 'success');
 }
 
 /* La commande part d'abord sur WhatsApp : l'enregistrement en base ne doit
@@ -492,8 +499,15 @@ function renderCart() {
   const body = document.getElementById('cartItems');
   if (!body) return;
 
+  const footer = document.getElementById('cartFooter');
+  if (footer) footer.classList.toggle('d-none', !state.cart.length);
+
   if (!state.cart.length) {
-    body.innerHTML = `<div class="empty-state"><i class="bi bi-bag"></i>Votre panier est vide.<br><small>Libérez votre énergie, ajoutez une pièce Free Spirit.</small></div>`;
+    body.innerHTML = `<div class="empty-state">
+      <i class="bi bi-bag"></i>Votre panier est vide.<br>
+      <small>Libérez votre énergie, ajoutez une pièce Free Spirit.</small><br>
+      <a class="btn btn-ghost-fs mt-4" href="#collection" data-bs-dismiss="offcanvas">Voir la collection</a>
+    </div>`;
   } else {
     body.innerHTML = state.cart.map((item, idx) => {
       const p = state.products.find(pr => pr.id === item.id);
@@ -563,12 +577,12 @@ function bindCustomerFields() {
 function validateCustomer() {
   readCustomer();
   if (!state.customer.name) {
-    toast('Indique ton nom pour commander');
+    toast('Indiquez votre nom pour commander');
     document.getElementById('customerName')?.focus();
     return false;
   }
   if (!state.customer.whatsapp) {
-    toast('Indique ton numéro WhatsApp pour commander');
+    toast('Indiquez votre numéro WhatsApp pour commander');
     document.getElementById('customerWhatsapp')?.focus();
     return false;
   }
@@ -598,7 +612,7 @@ function openQuickView(id) {
           ${hasPromo ? `<span class="old fs-6">${fmt(p.oldPrice)}</span>` : ''}
         </div>
         <p class="text-secondary small lh-lg mb-3">${escapeHtml(p.desc || '')}</p>
-        ${active.length ? `<div class="mb-3"><small class="text-secondary"><i class="bi bi-lightning-charge-fill red-text me-1"></i>Code actif : <b class="text-white">${escapeHtml(active[0].code)}</b> — appliqué si saisi dans le panier</small></div>` : ''}
+        ${active.length ? `<div class="mb-3"><small class="text-secondary"><i class="bi bi-lightning-charge-fill red-text me-1"></i>Code actif : <b class="text-white">${escapeHtml(active[0].code)}</b>, appliqué si saisi dans le panier</small></div>` : ''}
         <div class="mb-2"><small class="text-uppercase text-secondary" style="letter-spacing:.2em">Taille</small></div>
         <div class="d-flex flex-wrap gap-2 mb-3" id="qvSizes">
           ${p.sizes.map((s, i) => `<span class="size-pill ${i === 0 ? 'selected' : ''}" data-size="${escapeHtml(s)}" onclick="selectQvSize(this)">${escapeHtml(s)}</span>`).join('')}
@@ -688,7 +702,7 @@ function qvReviewsHTML(p) {
   return `
     <div class="qv-reviews">
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <span class="review-avg">${r.count ? r.avg.toFixed(1) : '—'}</span>
+        ${r.count ? `<span class="review-avg">${r.avg.toFixed(1)}</span>` : ''}
         ${starsHTML(r.avg)}
         <small class="text-secondary">${r.count ? `${r.count} avis client${r.count > 1 ? 's' : ''}` : 'Aucun avis pour le moment'}</small>
       </div>
@@ -699,8 +713,8 @@ function qvReviewsHTML(p) {
           ${[1, 2, 3, 4, 5].map(n => `<button type="button" class="star-btn" onclick="pickStar(${n})" aria-label="${n} étoile${n > 1 ? 's' : ''}"><i class="bi bi-star"></i></button>`).join('')}
         </div>
         <input type="hidden" id="reviewRating" value="0">
-        <input type="text" class="form-control form-control-sm mb-2" id="reviewAuthor" placeholder="Ton nom ou pseudo" maxlength="40" required>
-        <textarea class="form-control form-control-sm mb-2" id="reviewComment" rows="2" placeholder="Ton avis sur la pièce (optionnel)" maxlength="400"></textarea>
+        <input type="text" class="form-control form-control-sm mb-2" id="reviewAuthor" placeholder="Votre nom ou pseudo" maxlength="40" required>
+        <textarea class="form-control form-control-sm mb-2" id="reviewComment" rows="2" placeholder="Votre avis sur la pièce (facultatif)" maxlength="400"></textarea>
         <button type="submit" class="btn btn-fs btn-sm w-100"><i class="bi bi-send me-1"></i>Envoyer mon avis</button>
         <small class="review-note">Publié après validation de la boutique.</small>
       </form>
@@ -736,11 +750,11 @@ async function submitReview(e) {
   const rating = Number(document.getElementById('reviewRating')?.value || 0);
   const author = (document.getElementById('reviewAuthor')?.value || '').trim();
   const comment = (document.getElementById('reviewComment')?.value || '').trim();
-  if (rating < 1 || rating > 5) { toast('Choisis une note en étoiles'); return; }
-  if (!author) { toast('Indique ton nom ou ton pseudo'); return; }
+  if (rating < 1 || rating > 5) { toast('Choisissez une note en étoiles'); return; }
+  if (!author) { toast('Indiquez votre nom ou votre pseudo'); return; }
 
   const alreadyKey = 'fs_reviewed_' + p.id;
-  if (DB.get(alreadyKey, false)) { toast('Tu as déjà laissé un avis sur cette pièce'); return; }
+  if (DB.get(alreadyKey, false)) { toast('Vous avez déjà laissé un avis sur cette pièce'); return; }
 
   const review = reviewRow({
     id: uid(), productId: p.id, rating, author, comment,
@@ -749,7 +763,7 @@ async function submitReview(e) {
   try {
     await insertRow('reviews', review);
   } catch (error) {
-    dbFail(error, "Avis non envoyé. Vérifie ta connexion puis réessaie.");
+    dbFail(error, "Avis non envoyé. Vérifiez votre connexion puis réessayez.");
     return;
   }
   state.reviews.unshift(review);
@@ -758,7 +772,7 @@ async function submitReview(e) {
   const form = document.getElementById('reviewForm');
   if (form) { form.reset(); pickStar(0); form.classList.add('d-none'); }
   document.querySelectorAll('.btn-review-toggle').forEach(b => b.classList.remove('d-none'));
-  toast('Merci ! Ton avis sera publié après validation.', 'success');
+  toast('Merci ! Votre avis sera publié après validation.', 'success');
 }
 
 /* ==================== VIDÉOS 9:16 (SHOWREEL) ====================
@@ -846,7 +860,7 @@ function syncReelSound(card) {
   btn.setAttribute('aria-label', v.muted ? 'Activer le son' : 'Couper le son');
 }
 
-/* Un clic lance la lecture avec le son — le geste de l'utilisateur l'autorise.
+/* Un clic lance la lecture avec le son : le geste de l'utilisateur l'autorise.
    Si le navigateur refuse, on retombe sur une lecture muette. */
 function toggleReel(target) {
   const card = target.closest ? target.closest('.reel-card') : target;
@@ -974,7 +988,7 @@ async function initShop() {
   // Coordonnées de la boutique (numéro, WhatsApp, email, localisation)
   applyShopInfo();
   const heroWa = document.getElementById('heroWhatsApp');
-  if (heroWa) heroWa.addEventListener('click', () => openWhatsApp('Bonjour FREE SPIRIT ! Je veux commander une pièce de la collection.'));
+  if (heroWa) heroWa.addEventListener('click', () => openWhatsApp('Bonjour FREE SPIRIT ! Je souhaite commander une pièce de la collection.'));
 
   // Parallaxe légère des étoiles du hero
   const hero = document.getElementById('hero');
@@ -1033,26 +1047,120 @@ let editingProductId = null;
 let editingPromoId = null;
 let editingReelId = null;
 
+/* Photos : compression dans le navigateur puis envoi vers le stockage.
+   Seule l'URL publique est enregistrée en base, pas l'image entière. */
+const IMAGE_MAX_UPLOAD = 10 * 1024 * 1024; // 10 Mo
+const IMAGE_MAX_SIDE = 1600;               // pixels sur le plus grand côté
+const IMAGE_QUALITY = 0.85;
+
+let pendingProductImage = null;
+let pendingProductPreviewUrl = '';
+let pendingReelPoster = null;
+let pendingReelPreviewUrl = '';
+
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, IMAGE_MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        if (blob) resolve(blob);
+        else reject(new Error('Compression impossible'));
+      }, 'image/webp', IMAGE_QUALITY);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Image illisible'));
+    };
+    img.src = url;
+  });
+}
+
+async function uploadMedia(blob, folder) {
+  if (!sb) throw new Error('Stockage indisponible');
+  const ext = blob.type === 'image/webp' ? 'webp' : 'jpg';
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await sb.storage.from('media').upload(path, blob, {
+    contentType: blob.type || 'image/jpeg',
+    cacheControl: '31536000',
+    upsert: false,
+  });
+  if (error) throw error;
+  return sb.storage.from('media').getPublicUrl(path).data.publicUrl;
+}
+
+function clearPendingProductImage() {
+  pendingProductImage = null;
+  if (pendingProductPreviewUrl) {
+    URL.revokeObjectURL(pendingProductPreviewUrl);
+    pendingProductPreviewUrl = '';
+  }
+}
+
+function showPendingProductImage(blob) {
+  clearPendingProductImage();
+  pendingProductImage = blob;
+  pendingProductPreviewUrl = URL.createObjectURL(blob);
+  const img = document.getElementById('pfImagePreview');
+  const wrap = document.getElementById('pfImagePreviewWrap');
+  if (img && wrap) {
+    img.src = pendingProductPreviewUrl;
+    wrap.classList.add('show');
+  }
+}
+
+function clearPendingReelPoster() {
+  pendingReelPoster = null;
+  if (pendingReelPreviewUrl) {
+    URL.revokeObjectURL(pendingReelPreviewUrl);
+    pendingReelPreviewUrl = '';
+  }
+}
+
+function showPendingReelPoster(blob) {
+  clearPendingReelPoster();
+  pendingReelPoster = blob;
+  pendingReelPreviewUrl = URL.createObjectURL(blob);
+  const img = document.getElementById('rfPosterPreview');
+  const wrap = document.getElementById('rfPosterPreviewWrap');
+  if (img && wrap) {
+    img.src = pendingReelPreviewUrl;
+    wrap.classList.add('show');
+  }
+}
+
 async function initAdmin() {
   await loadState();
   await checkAdminGate();
 
   const pfImage = document.getElementById('pfImage');
-  if (pfImage) pfImage.addEventListener('input', updateProductImagePreview);
+  if (pfImage) pfImage.addEventListener('input', () => {
+    clearPendingProductImage();
+    updateProductImagePreview();
+  });
   const pfImageFile = document.getElementById('pfImageFile');
   if (pfImageFile) pfImageFile.addEventListener('change', handleProductImageFile);
   const pfPreview = document.getElementById('pfImagePreview');
   if (pfPreview) pfPreview.addEventListener('error', () => {
-    document.getElementById('pfImagePreviewWrap')?.classList.remove('show');
+    if (!pendingProductImage) document.getElementById('pfImagePreviewWrap')?.classList.remove('show');
   });
 
   const rfPoster = document.getElementById('rfPoster');
-  if (rfPoster) rfPoster.addEventListener('input', updateReelPosterPreview);
+  if (rfPoster) rfPoster.addEventListener('input', () => {
+    clearPendingReelPoster();
+    updateReelPosterPreview();
+  });
   const rfPosterFile = document.getElementById('rfPosterFile');
   if (rfPosterFile) rfPosterFile.addEventListener('change', handleReelPosterFile);
   const rfPreview = document.getElementById('rfPosterPreview');
   if (rfPreview) rfPreview.addEventListener('error', () => {
-    document.getElementById('rfPosterPreviewWrap')?.classList.remove('show');
+    if (!pendingReelPoster) document.getElementById('rfPosterPreviewWrap')?.classList.remove('show');
   });
 }
 
@@ -1092,7 +1200,7 @@ async function submitAdminLogin(e) {
     console.error('[FREE SPIRIT] Connexion refusée', error);
     toast(/invalid login credentials|email not confirmed/i.test(error.message)
       ? 'Email ou mot de passe incorrect'
-      : 'Connexion impossible, réessaie dans un instant');
+      : 'Connexion impossible, réessayez dans un instant');
     passwordInput.classList.add('is-invalid');
     setTimeout(() => passwordInput.classList.remove('is-invalid'), 1500);
     return;
@@ -1270,7 +1378,7 @@ function renderAdminProducts() {
   const tbody = document.getElementById('adminProductsBody');
   if (!tbody) return;
   if (!state.products.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="bi bi-inboxes"></i>Aucun produit. Ajoute ton premier article.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="bi bi-inboxes"></i>Aucun produit. Ajoutez votre premier article.</div></td></tr>`;
     return;
   }
   tbody.innerHTML = state.products.map(p => `
@@ -1290,7 +1398,8 @@ function renderAdminProducts() {
     </tr>`).join('');
 }
 
-/* Image produit : saisie par URL ou import d'un fichier local (data URL) */
+/* Image produit : saisie par URL ou import d'un fichier local
+   (compressé puis envoyé dans le stockage Supabase à l'enregistrement) */
 function updateProductImagePreview() {
   const input = document.getElementById('pfImage');
   const wrap = document.getElementById('pfImagePreviewWrap');
@@ -1302,22 +1411,28 @@ function updateProductImagePreview() {
   wrap.classList.add('show');
 }
 
-function handleProductImageFile(e) {
+async function handleProductImageFile(e) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
-  if (file.size > 2 * 1024 * 1024) {
+  if (!file.type.startsWith('image/')) {
     e.target.value = '';
-    toast('Image trop lourde (2 Mo max). Choisissez un fichier plus léger ou passez par une URL.');
+    toast('Choisissez un fichier image (JPG, PNG, WebP).');
     return;
   }
-  const reader = new FileReader();
-  reader.onload = () => {
-    document.getElementById('pfImage').value = reader.result;
-    updateProductImagePreview();
-    toast('Image chargée. Enregistrez pour l\'ajouter à la boutique.', 'success');
-  };
-  reader.onerror = () => toast('Impossible de lire ce fichier image');
-  reader.readAsDataURL(file);
+  if (file.size > IMAGE_MAX_UPLOAD) {
+    e.target.value = '';
+    toast('Photo trop lourde (10 Mo max). Choisissez un fichier plus léger ou passez par une URL.');
+    return;
+  }
+  try {
+    const blob = await compressImage(file);
+    showPendingProductImage(blob);
+    document.getElementById('pfImage').value = '';
+    toast('Photo prête. Elle sera envoyée au moment de l\'enregistrement.', 'success');
+  } catch (error) {
+    e.target.value = '';
+    toast('Photo illisible. Utilisez un fichier JPG, PNG ou WebP.');
+  }
 }
 
 function openProductForm(id = null) {
@@ -1334,6 +1449,7 @@ function openProductForm(id = null) {
   document.getElementById('pfOldPrice').value = p && p.oldPrice ? p.oldPrice : '';
   document.getElementById('pfImage').value = p ? p.image : '';
   document.getElementById('pfImageFile').value = '';
+  clearPendingProductImage();
   document.getElementById('pfSizes').value = p ? (p.sizes || []).join(', ') : 'S, M, L, XL';
   document.getElementById('pfDesc').value = p ? (p.desc || '') : '';
   updateProductImagePreview();
@@ -1346,11 +1462,21 @@ async function submitProductForm(e) {
   const category = document.getElementById('pfCategory').value;
   const price = Number(document.getElementById('pfPrice').value);
   const oldPriceRaw = document.getElementById('pfOldPrice').value;
-  const image = document.getElementById('pfImage').value.trim();
+  let image = document.getElementById('pfImage').value.trim();
   const sizes = document.getElementById('pfSizes').value.split(',').map(s => s.trim()).filter(Boolean);
   const desc = document.getElementById('pfDesc').value.trim();
 
-  if (!name || !price || !image) { toast('Nom, prix et image sont obligatoires'); return; }
+  if (!name || !price) { toast('Nom et prix sont obligatoires'); return; }
+
+  if (pendingProductImage) {
+    try {
+      image = await uploadMedia(pendingProductImage, 'produits');
+    } catch (error) {
+      dbFail(error, 'Photo non envoyée');
+      return;
+    }
+  }
+  if (!image) { toast('Choisissez une photo ou collez un lien d\'image'); return; }
 
   const idx = editingProductId ? state.products.findIndex(p => p.id === editingProductId) : -1;
   const previous = idx >= 0 ? state.products[idx] : null;
@@ -1378,6 +1504,8 @@ async function submitProductForm(e) {
   }
   renderAdminProducts();
   renderAdminStats();
+  clearPendingProductImage();
+  document.getElementById('pfImageFile').value = '';
   bootstrap.Modal.getInstance(document.getElementById('productModal'))?.hide();
 }
 
@@ -1457,7 +1585,7 @@ async function submitPromoForm(e) {
     toast(`Code "${code}" modifié`, 'success');
   } else {
     state.promos.unshift(row);
-    toast(`Code "${code}" créé — visible sur la boutique`, 'success');
+    toast(`Code "${code}" créé, visible sur la boutique`, 'success');
   }
   renderAdminPromos();
   renderAdminStats();
@@ -1526,7 +1654,7 @@ function renderAdminReviews() {
         ${r.verified ? '<br><small class="text-secondary"><i class="bi bi-patch-check-fill me-1"></i>Achat vérifié</small>' : ''}
       </td>
       <td><small>${escapeHtml(product ? product.name : 'Produit supprimé')}</small></td>
-      <td><small class="text-secondary">${escapeHtml(r.comment || '—')}</small><br><small class="text-secondary">${new Date(r.date).toLocaleDateString('fr-FR')}</small></td>
+      <td><small class="text-secondary">${escapeHtml(r.comment || 'Aucun commentaire')}</small><br><small class="text-secondary">${new Date(r.date).toLocaleDateString('fr-FR')}</small></td>
       <td><span class="status-pill ${published ? 'on' : 'off'}">${published ? 'Publié' : 'En attente'}</span></td>
       <td class="text-nowrap">
         <button class="icon-action me-1" title="${published ? 'Retirer de la boutique' : 'Publier sur la boutique'}" onclick="toggleReview('${r.id}')"><i class="bi bi-${published ? 'eye-slash' : 'check2'}"></i></button>
@@ -1566,7 +1694,7 @@ async function deleteReview(id) {
   toast('Avis supprimé');
 }
 
-/* Saisie manuelle d'un avis (ex. un client satisfait qui t'écrit sur WhatsApp) */
+/* Saisie manuelle d'un avis (ex. un client satisfait qui vous écrit sur WhatsApp) */
 function openReviewForm() {
   const select = document.getElementById('arfProduct');
   if (!select) return;
@@ -1589,7 +1717,7 @@ async function submitAdminReviewForm(e) {
   const comment = document.getElementById('arfComment').value.trim();
   if (!productId) { toast('Aucun produit disponible'); return; }
   if (!author) { toast('Nom du client obligatoire'); return; }
-  if (rating < 1 || rating > 5) { toast('Choisis une note en étoiles'); return; }
+  if (rating < 1 || rating > 5) { toast('Choisissez une note en étoiles'); return; }
 
   const row = reviewRow({
     id: uid(), productId, rating, author, comment,
@@ -1621,7 +1749,7 @@ function renderAdminReels() {
     <tr>
       <td>${r.poster
         ? `<img class="thumb" src="${escapeHtml(r.poster)}" alt="">`
-        : r.video ? '<i class="bi bi-film text-secondary"></i>' : '<span class="text-secondary">—</span>'}</td>
+        : r.video ? '<i class="bi bi-film text-secondary"></i>' : '<span class="text-secondary">Aucun</span>'}</td>
       <td>
         <span class="t-name">${escapeHtml(r.title || 'Sans titre')}</span>
         <br><small class="text-secondary">${r.video ? 'Lien externe' : 'Visuel fixe'}</small>
@@ -1645,22 +1773,28 @@ function updateReelPosterPreview() {
   wrap.classList.add('show');
 }
 
-function handleReelPosterFile(e) {
+async function handleReelPosterFile(e) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
-  if (file.size > 2 * 1024 * 1024) {
+  if (!file.type.startsWith('image/')) {
     e.target.value = '';
-    toast('Image trop lourde (2 Mo max). Passe par une URL.');
+    toast('Choisissez un fichier image (JPG, PNG, WebP).');
     return;
   }
-  const reader = new FileReader();
-  reader.onload = () => {
-    document.getElementById('rfPoster').value = reader.result;
-    updateReelPosterPreview();
-    toast('Visuel chargé. Enregistre pour publier.', 'success');
-  };
-  reader.onerror = () => toast('Impossible de lire ce fichier image');
-  reader.readAsDataURL(file);
+  if (file.size > IMAGE_MAX_UPLOAD) {
+    e.target.value = '';
+    toast('Visuel trop lourd (10 Mo max). Passez par une URL.');
+    return;
+  }
+  try {
+    const blob = await compressImage(file);
+    showPendingReelPoster(blob);
+    document.getElementById('rfPoster').value = '';
+    toast('Visuel prêt. Il sera envoyé au moment de l\'enregistrement.', 'success');
+  } catch (error) {
+    e.target.value = '';
+    toast('Visuel illisible. Utilisez un fichier JPG, PNG ou WebP.');
+  }
 }
 
 function openReelForm(id = null) {
@@ -1671,6 +1805,7 @@ function openReelForm(id = null) {
   document.getElementById('rfVideo').value = r ? (r.video || '') : '';
   document.getElementById('rfPoster').value = r ? (r.poster || '') : '';
   document.getElementById('rfPosterFile').value = '';
+  clearPendingReelPoster();
   document.getElementById('rfLink').value = r ? (r.link || '') : '';
   document.getElementById('rfLinkLabel').value = r ? (r.linkLabel || '') : '';
   updateReelPosterPreview();
@@ -1678,7 +1813,7 @@ function openReelForm(id = null) {
 }
 
 /* Un src média est sûr s'il est en http(s), en data:image/ (import local),
-   ou en chemin relatif — tout autre schéma (javascript:, data:text/html…) est refusé. */
+   ou en chemin relatif : tout autre schéma (javascript:, data:text/html…) est refusé. */
 function isSafeMediaSrc(raw, allowDataImage) {
   if (/^https?:\/\//i.test(raw)) return true;
   if (allowDataImage && /^data:image\//i.test(raw)) return true;
@@ -1690,14 +1825,23 @@ async function submitReelForm(e) {
   const value = id => (document.getElementById(id)?.value || '').trim();
   const title = value('rfTitle');
   const video = value('rfVideo');
-  const poster = value('rfPoster');
+  let poster = value('rfPoster');
   const link = value('rfLink');
   const linkLabel = value('rfLinkLabel');
 
-  if (!video && !poster) { toast('Renseigne au moins une vidéo ou un visuel'); return; }
   if (video && !isSafeMediaSrc(video, false)) { toast("L'URL de la vidéo doit être un lien http(s) ou un fichier du site"); return; }
-  if (poster && !isSafeMediaSrc(poster, true)) { toast('Le visuel doit être un lien http(s), un fichier du site ou une image importée'); return; }
   if (link && !/^https?:\/\//i.test(link)) { toast('Le lien de redirection doit commencer par http:// ou https://'); return; }
+
+  if (pendingReelPoster) {
+    try {
+      poster = await uploadMedia(pendingReelPoster, 'visuels');
+    } catch (error) {
+      dbFail(error, 'Visuel non envoyé');
+      return;
+    }
+  }
+  if (!video && !poster) { toast('Renseigne au moins une vidéo ou un visuel'); return; }
+  if (poster && !isSafeMediaSrc(poster, true)) { toast('Le visuel doit être un lien http(s), un fichier du site ou une image importée'); return; }
 
   const previous = editingReelId ? state.reels.find(x => x.id === editingReelId) : null;
   const row = reelRow({ ...(previous || {}), id: previous ? previous.id : uid(), title, video, poster, link, linkLabel });
@@ -1714,9 +1858,11 @@ async function submitReelForm(e) {
     toast('Vidéo modifiée', 'success');
   } else {
     state.reels.push(row);
-    toast('Vidéo ajoutée — visible en bas de la boutique', 'success');
+    toast('Vidéo ajoutée, visible en bas de la boutique', 'success');
   }
   renderAdminReels();
+  clearPendingReelPoster();
+  document.getElementById('rfPosterFile').value = '';
   bootstrap.Modal.getInstance(document.getElementById('reelModal'))?.hide();
 }
 

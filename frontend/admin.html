@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Administration — FREE SPIRIT</title>
+  <title>Administration · FREE SPIRIT</title>
   <meta name="robots" content="noindex">
 
   <!-- Même politique que la boutique : aucune source non listée ne peut s'exécuter. -->
@@ -20,7 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- Design System Free Spirit -->
   <link rel="stylesheet" href="../css/style.css">
-  <link rel="icon" type="image/png" href="../assets/images/etoile-fs.png">
+  <link rel="icon" type="image/png" href="../assets/images/etoile-fs-icon.png">
 </head>
 
 <body data-page="admin">
@@ -29,11 +29,11 @@
 
   <!-- ============ PORTE D'ACCÈS (MOT DE PASSE) ============ -->
   <section class="admin-gate" id="adminGate">
-    <img class="bg-star" src="../assets/images/etoile-fs.png" alt="" style="top:-120px; left:-120px;">
-    <img class="bg-star" src="../assets/images/etoile-fs.png" alt="" style="bottom:-140px; right:-100px; animation-delay:2s;">
+    <img class="bg-star" src="../assets/images/etoile-fs.webp" alt="" style="top:-120px; left:-120px;">
+    <img class="bg-star" src="../assets/images/etoile-fs.webp" alt="" style="bottom:-140px; right:-100px; animation-delay:2s;">
     <div class="admin-gate-card">
       <div class="text-center mb-4">
-        <img src="../assets/images/etoile-fs.png" alt="Free Spirit" width="58" height="58" class="mb-3">
+        <img src="../assets/images/etoile-fs-icon.png" alt="Free Spirit" width="58" height="58" class="mb-3">
         <h1 class="font-display fw-black text-uppercase mb-1" style="font-weight:900; font-size:1.25rem; letter-spacing:.06em;">
           FREE <span class="chrome-text">SPIRIT</span>
         </h1>
@@ -42,7 +42,7 @@
       <form onsubmit="submitAdminLogin(event)">
         <div class="mb-3">
           <label class="form-label" for="adminEmail">Email</label>
-          <input type="email" class="form-control" id="adminEmail" placeholder="admin@freespirit.com" autocomplete="username" required>
+          <input type="email" class="form-control" id="adminEmail" placeholder="Votre adresse email" autocomplete="username" required>
         </div>
         <div class="mb-3">
           <label class="form-label" for="adminPassword">Mot de passe</label>
@@ -61,10 +61,10 @@
     <div class="admin-topbar">
       <div class="container d-flex align-items-center justify-content-between flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
-          <img src="../assets/images/etoile-fs.png" alt="" width="30" height="30">
+          <img src="../assets/images/etoile-fs-icon.png" alt="" width="30" height="30">
           <div>
             <div class="font-display fw-bold text-uppercase" style="font-size:.85rem; letter-spacing:.1em;">FREE SPIRIT <span class="chrome-text">/ ADMIN</span></div>
-            <small class="text-secondary" style="font-size:.68rem;">Catalogue, promos et commandes — enregistrés dans la base de la boutique</small>
+            <small class="text-secondary" style="font-size:.68rem;">Catalogue, promos et commandes, enregistrés dans la base de la boutique</small>
           </div>
         </div>
         <div class="d-flex gap-2 align-items-center">
@@ -125,8 +125,8 @@
         </div>
         <p class="text-secondary small mt-3">
           <i class="bi bi-info-circle me-1"></i>
-          Chaque commande part directement sur ton WhatsApp : c'est là que tu t'entends avec le client sur
-          la livraison et le paiement. Cette liste te sert d'historique, avec le nom et le numéro laissés
+          Chaque commande part directement sur votre WhatsApp : c'est là que vous vous entendez avec le client sur
+          la livraison et le paiement. Cette liste vous sert d'historique, avec le nom et le numéro laissés
           dans le panier.
         </p>
       </div>
@@ -167,8 +167,8 @@
         </div>
         <p class="text-secondary small mt-3">
           <i class="bi bi-info-circle me-1"></i>
-          Un avis envoyé depuis la boutique reste <b>en attente</b> jusqu'à ta validation : rien ne s'affiche
-          sur les fiches produits tant que tu ne l'as pas publié. La note moyenne en étoiles se recalcule toute seule.
+          Un avis envoyé depuis la boutique reste <b>en attente</b> jusqu'à votre validation : rien ne s'affiche
+          sur les fiches produits tant que vous ne l'avez pas publié. La note moyenne en étoiles se recalcule toute seule.
         </p>
       </div>
 
@@ -189,7 +189,7 @@
         <p class="text-secondary small mt-3">
           <i class="bi bi-info-circle me-1"></i>
           Ces cartes verticales s'affichent tout en bas de la boutique et se feuillettent du doigt.
-          La vidéo doit être hébergée quelque part (URL directe en <code>.mp4</code>, ou ton lien TikTok / Instagram
+          La vidéo doit être hébergée quelque part (URL directe en <code>.mp4</code>, ou votre lien TikTok / Instagram
           dans « Redirige vers »). Tant qu'aucune vidéo n'est enregistrée, la section reste masquée.<br>
           <i class="bi bi-cursor me-1"></i>
           Sur ordinateur, un extrait de la vidéo se lance au survol de <b>chaque</b> carte, avec ou sans visuel.
@@ -215,17 +215,17 @@
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label" for="sfWhatsapp">Numéro WhatsApp *</label>
-              <input type="tel" class="form-control" id="sfWhatsapp" inputmode="numeric" placeholder="22893838593" required>
+              <input type="tel" class="form-control" id="sfWhatsapp" inputmode="numeric" placeholder="22878019857" required>
               <div class="form-text">Format international, sans « + » ni espaces. Sert aux commandes et au bouton flottant.</div>
             </div>
             <div class="col-md-6">
               <label class="form-label" for="sfPhone">Numéro affiché *</label>
-              <input type="tel" class="form-control" id="sfPhone" placeholder="+228 93 83 85 93" required>
+              <input type="tel" class="form-control" id="sfPhone" placeholder="+228 78 01 98 57" required>
               <div class="form-text">Tel qu'il doit apparaître dans le pied de page. Le lien d'appel est généré automatiquement.</div>
             </div>
             <div class="col-md-6">
               <label class="form-label" for="sfEmail">Adresse email</label>
-              <input type="email" class="form-control" id="sfEmail" placeholder="contact@freespirit.prod">
+              <input type="email" class="form-control" id="sfEmail" placeholder="marcomiller517@gmail.com">
             </div>
             <div class="col-md-6">
               <label class="form-label" for="sfAddress">Localisation / adresse</label>
@@ -244,8 +244,8 @@
             </div>
             <div class="col-12">
               <label class="form-label" for="sfWaProfile">Lien du profil WhatsApp <span class="fw-normal text-secondary">(optionnel)</span></label>
-              <input type="url" class="form-control" id="sfWaProfile" placeholder="https://wa.me/22893838593">
-              <div class="form-text">Utilisé pour le lien « WhatsApp — réponse rapide » du pied de page.</div>
+              <input type="url" class="form-control" id="sfWaProfile" placeholder="https://wa.me/22878019857">
+              <div class="form-text">Utilisé pour le lien « WhatsApp : réponse rapide » du pied de page.</div>
             </div>
             <div class="col-12 mt-3">
               <label class="form-label mb-1">Pages réseaux sociaux <span class="fw-normal text-secondary">(optionnel)</span></label>
@@ -305,7 +305,7 @@
             <div class="row g-3">
               <div class="col-md-8">
                 <label class="form-label">Nom du produit *</label>
-                <input type="text" class="form-control" id="pfName" placeholder="CHROME STAR TEE" required>
+                <input type="text" class="form-control" id="pfName" placeholder="Ex. T-shirt oversize noir" required>
               </div>
               <div class="col-md-4">
                 <label class="form-label">Catégorie *</label>
@@ -329,23 +329,14 @@
                 <input type="text" class="form-control" id="pfSizes" placeholder="S, M, L, XL">
               </div>
               <div class="col-12">
-                <label class="form-label">Image du produit * <span class="fw-normal text-secondary">(par URL ou fichier local)</span></label>
+                <label class="form-label">Image du produit * <span class="fw-normal text-secondary">(photo importée ou URL)</span></label>
                 <div class="row g-2">
                   <div class="col-md-7">
-                    <input type="text" class="form-control" id="pfImage" list="assetList" placeholder="https://exemple.com/visuel.jpg" required>
-                    <datalist id="assetList">
-                      <option value="../assets/images/tee-sans-manches.jpg">T-shirt blanc sans manches</option>
-                      <option value="../assets/images/tee-noir.png">T-shirt noir étoile</option>
-                      <option value="../assets/images/pantalon-cargo.png">Cargo noir</option>
-                      <option value="../assets/images/sneakers-chrome.png">Sneakers chrome</option>
-                      <option value="../assets/images/ceinture-etoile.png">Ceinture étoile</option>
-                      <option value="../assets/images/logo-gothic.jpg">Logo gothique</option>
-                      <option value="../assets/images/manifeste.jpg">Manifeste</option>
-                    </datalist>
+                    <input type="text" class="form-control" id="pfImage" placeholder="https://exemple.com/photo.jpg">
                   </div>
                   <div class="col-md-5">
                     <input type="file" class="form-control" id="pfImageFile" accept="image/*">
-                    <div class="form-text">Fichier local : 2 Mo max, encodé et sauvegardé automatiquement.</div>
+                    <div class="form-text">Photo : 10 Mo max. Elle est redimensionnée et compressée avant l'envoi dans le stockage du site.</div>
                   </div>
                 </div>
                 <div class="pf-image-preview" id="pfImagePreviewWrap">
@@ -462,28 +453,28 @@
           <form onsubmit="submitReelForm(event)">
             <div class="row g-3">
               <div class="col-12">
-                <label class="form-label" for="rfTitle">Titre <span class="fw-normal text-secondary">— facultatif</span></label>
-                <input type="text" class="form-control" id="rfTitle" placeholder="Défilé Lomé — backstage" maxlength="60">
+                <label class="form-label" for="rfTitle">Titre <span class="fw-normal text-secondary">(facultatif)</span></label>
+                <input type="text" class="form-control" id="rfTitle" placeholder="Défilé Lomé, backstage" maxlength="60">
               </div>
 
               <div class="col-12">
-                <label class="form-label" for="rfVideo">La vidéo à afficher <span class="fw-normal text-secondary">— lien direct vers un fichier hébergé</span></label>
+                <label class="form-label" for="rfVideo">La vidéo à afficher <span class="fw-normal text-secondary">(lien direct vers un fichier hébergé)</span></label>
                 <input type="text" class="form-control" id="rfVideo" placeholder="https://exemple.com/defile.mp4">
                 <div class="form-text">
                   Lien <b>direct</b> vers un fichier vidéo hébergé (<code>.mp4</code>). Un lien de profil ou de
-                  publication TikTok ne se lit pas ici : mets-le dans « Redirige vers » ci-dessous.
+                  publication TikTok ne se lit pas ici : mettez-le dans « Redirige vers » ci-dessous.
                 </div>
               </div>
 
               <div class="col-12">
-                <label class="form-label" for="rfPoster">Visuel de couverture <span class="fw-normal text-secondary">— facultatif, image verticale</span></label>
+                <label class="form-label" for="rfPoster">Visuel de couverture <span class="fw-normal text-secondary">(facultatif, image verticale)</span></label>
                 <div class="row g-2">
                   <div class="col-md-7">
                     <input type="text" class="form-control" id="rfPoster" placeholder="https://exemple.com/couverture.jpg">
                   </div>
                   <div class="col-md-5">
                     <input type="file" class="form-control" id="rfPosterFile" accept="image/*">
-                    <div class="form-text">Fichier local : 2 Mo max.</div>
+                    <div class="form-text">Photo : 10 Mo max. Redimensionnée et compressée avant l'envoi.</div>
                   </div>
                 </div>
                 <div class="form-text">
@@ -497,11 +488,11 @@
               </div>
 
               <div class="col-md-8">
-                <label class="form-label" for="rfLink">Redirige vers <span class="fw-normal text-secondary">— facultatif</span></label>
+                <label class="form-label" for="rfLink">Redirige vers <span class="fw-normal text-secondary">(facultatif)</span></label>
                 <input type="text" class="form-control" id="rfLink" placeholder="https://www.tiktok.com/@freespirit">
                 <div class="form-text">
-                  Ton profil TikTok / Instagram, ou une publication précise. Un bouton s'affiche sur la carte
-                  et s'ouvre dans un nouvel onglet. Laisse vide : aucun bouton ne sera affiché.
+                  Votre profil TikTok / Instagram, ou une publication précise. Un bouton s'affiche sur la carte
+                  et s'ouvre dans un nouvel onglet. Laissez vide : aucun bouton ne sera affiché.
                 </div>
               </div>
               <div class="col-md-4">
