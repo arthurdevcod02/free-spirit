@@ -1,6 +1,7 @@
 -- ============================================================
 --  FREE SPIRIT — Base de données Supabase
---  Fichier unique : tables + sécurité (RLS) + stockage + démo
+--  Fichier unique : tables + sécurité (RLS) + stockage
+--  + liste des administrateurs
 --
 --  MODE D'EMPLOI
 --    1. Supabase > SQL Editor (menu de gauche) > New query
@@ -8,6 +9,9 @@
 --    3. Clique sur RUN
 --    Tu dois voir un petit tableau avec le nombre de lignes
 --    de chaque table.
+--
+--  Base déjà en service : exécute plutôt securite-admin.sql,
+--  qui installe la liste des administrateurs sans rien effacer.
 --
 --  Ce fichier peut être relancé plusieurs fois sans rien
 --  casser : il ne crée pas de doublon et n'écrase jamais
