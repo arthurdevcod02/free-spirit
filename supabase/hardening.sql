@@ -1,6 +1,12 @@
 /* ============================================================
    FREE SPIRIT — durcissement des règles de sécurité (RLS)
    ------------------------------------------------------------
+   NOTE : ces règles sont désormais incluses dans le fichier
+   securite-admin.sql, qui installe aussi la liste des
+   administrateurs. Exécutez securite-admin.sql en priorité ;
+   ce fichier reste utile seulement pour rejouer les règles
+   d'insertion publique.
+   ------------------------------------------------------------
    À coller dans Supabase → SQL Editor → Run.
    Aucune donnée n'est supprimée : ce script remplace seulement
    une règle trop permissive par une règle qui vérifie ce qu'un

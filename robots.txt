@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /admin.html
 Disallow: /frontend/admin.html
 
 Sitemap: https://free-spirit-rho.vercel.app/sitemap.xml

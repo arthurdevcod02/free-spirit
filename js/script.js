@@ -45,8 +45,12 @@ const CATEGORIES = {
 
 /* ==================== STOCKAGE ==================== */
 // Base de données : catalogue, promos, commandes, avis, vidéos, infos boutique.
+// La session admin vit dans sessionStorage : elle meurt avec l'onglet et
+// n'est jamais partagée avec un autre onglet du navigateur.
 const sb = window.supabase
-  ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY)
+  ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+      auth: { storage: window.sessionStorage, persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
+    })
   : null;
 
 // localStorage ne garde que ce qui appartient à l'appareil du visiteur.
@@ -67,6 +71,11 @@ const KEYS = {
 
 const uid = () => 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
 const escapeHtml = (str = '') => String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/* Une valeur reprise dans un gestionnaire onclick doit être encodée comme
+   une chaîne JavaScript ET comme un attribut HTML : un identifiant venu de
+   la base ne doit jamais pouvoir refermer l'attribut ni la chaîne. */
+const jsArg = value => escapeHtml(JSON.stringify(String(value ?? '')));
+const CATEGORY_LABEL = key => escapeHtml(CATEGORIES[key] || key || '');
 const fmt = n => `${Number(n).toLocaleString('fr-FR')} ${CONFIG.CURRENCY}`;
 
 /* ==================== ÉTAT GLOBAL ==================== */
@@ -160,7 +169,11 @@ const settingsRow = s => ({
 });
 
 async function loadState() {
-  state.cart = DB.get(KEYS.cart, []);
+  // Le panier appartient à l'appareil : on ne garde que des lignes cohérentes.
+  const rawCart = DB.get(KEYS.cart, []);
+  state.cart = (Array.isArray(rawCart) ? rawCart : [])
+    .filter(i => i && typeof i.id === 'string' && typeof i.size === 'string')
+    .map(i => ({ id: i.id, size: i.size, qty: Math.min(99, Math.max(1, Math.trunc(Number(i.qty)) || 1)) }));
   state.customer = { name: '', whatsapp: '', ...(DB.get(KEYS.customer, null) || {}) };
   try {
     const [products, promos, reviews, reels, settings] = await Promise.all([
@@ -425,17 +438,17 @@ function productCardHTML(p) {
   const r = ratingStats(p.id);
   return `
   <div class="col-6 col-md-4 reveal">
-    <article class="product-card h-100" data-id="${p.id}" onclick="openQuickView('${p.id}')">
+    <article class="product-card h-100" data-id="${escapeHtml(p.id)}" onclick="openQuickView(${jsArg(p.id)})">
       <div class="pc-media">
         ${hasPromo ? `<span class="pc-badge sale">-${discountPct}%</span>` : `<span class="pc-badge new">FS</span>`}
         <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy">
         <div class="pc-actions" onclick="event.stopPropagation()">
-          <button class="btn btn-add" onclick="quickAdd('${p.id}')"><i class="bi bi-bag-plus me-1"></i>Ajouter</button>
-          <button class="btn btn-view" onclick="openQuickView('${p.id}')" title="Aperçu"><i class="bi bi-eye"></i></button>
+          <button class="btn btn-add" onclick="quickAdd(${jsArg(p.id)})"><i class="bi bi-bag-plus me-1"></i>Ajouter</button>
+          <button class="btn btn-view" onclick="openQuickView(${jsArg(p.id)})" title="Aperçu"><i class="bi bi-eye"></i></button>
         </div>
       </div>
       <div class="pc-info">
-        <div class="pc-cat">${CATEGORIES[p.category] || escapeHtml(p.category)}</div>
+        <div class="pc-cat">${CATEGORY_LABEL(p.category)}</div>
         <h3 class="pc-name">${escapeHtml(p.name)}</h3>
         ${r.count ? `<div class="pc-rating">${starsHTML(r.avg)}<span class="pc-rating-count">(${r.count})</span></div>` : ''}
         <div class="pc-price">
@@ -605,7 +618,7 @@ function openQuickView(id) {
         <div class="qv-media"><img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}"></div>
       </div>
       <div class="col-md-6 d-flex flex-column">
-        <span class="label-tag mb-2">${CATEGORIES[p.category] || ''}</span>
+        <span class="label-tag mb-2">${CATEGORY_LABEL(p.category)}</span>
         <h3 class="section-title fs-3 mb-2">${escapeHtml(p.name)}</h3>
         <div class="pc-price mb-3">
           <span class="now fs-4 ${hasPromo ? 'hot' : ''}">${fmt(p.price)}</span>
@@ -1014,7 +1027,7 @@ async function initLegal() {
   const addr = document.getElementById('legalAddress');
   if (addr) {
     if (state.settings.mapsUrl) {
-      addr.innerHTML = `<a class="red-text" href="${safeHref(state.settings.mapsUrl)}" target="_blank" rel="noopener">${escapeHtml(state.settings.address || 'Voir sur Google Maps')}</a>`;
+      addr.innerHTML = `<a class="red-text" href="${escapeHtml(safeHref(state.settings.mapsUrl))}" target="_blank" rel="noopener">${escapeHtml(state.settings.address || 'Voir sur Google Maps')}</a>`;
     } else {
       addr.textContent = state.settings.address || 'Non renseignée pour le moment';
     }
@@ -1136,6 +1149,7 @@ function showPendingReelPoster(blob) {
 }
 
 async function initAdmin() {
+  clearLegacyLocalSession();
   await loadState();
   await checkAdminGate();
 
@@ -1164,11 +1178,70 @@ async function initAdmin() {
   });
 }
 
-/* Connexion réelle : la session Supabase survit au rechargement de la page
-   et disparaît au clic sur « Verrouiller ». */
+/* Une session Supabase valide ne suffit pas : le compte doit figurer dans la
+   liste d'administrateurs, contrôlée par la fonction is_admin de la base.
+   Tant que cette fonction n'est pas installée, le vendeur conserve l'accès
+   (inscriptions fermées, un seul compte) et la console le signale. */
+let adminAllowlist = 'unknown'; // unknown | enforced | missing
+
+async function isAllowedAdmin() {
+  if (!sb) return false;
+  const { data, error } = await sb.rpc('is_admin');
+  if (!error) {
+    adminAllowlist = 'enforced';
+    return data === true;
+  }
+  adminAllowlist = 'missing';
+  console.warn('[FREE SPIRIT] is_admin indisponible : exécutez supabase/securite-admin.sql.', error.message);
+  return true;
+}
+
+/* Session admin : verrouillage automatique après 15 minutes sans activité. */
+const ADMIN_IDLE_MS = 15 * 60 * 1000;
+let adminIdleTimer = null;
+let adminActivityHandler = null;
+let adminLastActivity = 0;
+
+function stopAdminIdleWatch() {
+  if (adminIdleTimer) clearInterval(adminIdleTimer);
+  adminIdleTimer = null;
+  if (adminActivityHandler) {
+    ['mousemove', 'keydown', 'click', 'touchstart'].forEach(ev => document.removeEventListener(ev, adminActivityHandler));
+    adminActivityHandler = null;
+  }
+}
+
+function startAdminIdleWatch() {
+  stopAdminIdleWatch();
+  adminLastActivity = Date.now();
+  adminActivityHandler = () => { adminLastActivity = Date.now(); };
+  ['mousemove', 'keydown', 'click', 'touchstart'].forEach(ev => document.addEventListener(ev, adminActivityHandler, { passive: true }));
+  adminIdleTimer = setInterval(() => {
+    if (Date.now() - adminLastActivity < ADMIN_IDLE_MS) return;
+    toast('Session verrouillée après 15 minutes sans activité');
+    adminLogout();
+  }, 30000);
+}
+
+/* Une ancienne session gardée dans localStorage par une version précédente
+   ne doit plus traîner sur l'appareil. */
+function clearLegacyLocalSession() {
+  try {
+    const ref = new URL(CONFIG.SUPABASE_URL).hostname.split('.')[0];
+    localStorage.removeItem(`sb-${ref}-auth-token`);
+  } catch { /* stockage indisponible : rien à nettoyer */ }
+}
+
+/* Connexion réelle : la session Supabase vit le temps de l'onglet et
+   disparaît au clic sur « Verrouiller » ou après une longue inactivité. */
 async function checkAdminGate() {
   const session = sb ? (await sb.auth.getSession()).data.session : null;
-  const unlocked = !!session;
+  let unlocked = !!session;
+  if (unlocked && !(await isAllowedAdmin())) {
+    await sb.auth.signOut({ scope: 'local' });
+    unlocked = false;
+    toast("Ce compte n'est pas autorisé à administrer la boutique");
+  }
   document.getElementById('adminGate').classList.toggle('d-none', unlocked);
   document.getElementById('adminShell').classList.toggle('d-none', !unlocked);
   const who = document.getElementById('adminWho');
@@ -1177,7 +1250,8 @@ async function checkAdminGate() {
     : '';
   const acct = document.getElementById('accountEmail');
   if (acct) acct.textContent = unlocked ? session.user.email : '';
-  if (!unlocked) return;
+  if (!unlocked) { stopAdminIdleWatch(); return; }
+  startAdminIdleWatch();
   await loadOrders();
   renderAdmin();
 }
@@ -1214,7 +1288,7 @@ async function submitPasswordChange(e) {
   e.preventDefault();
   const value = id => (document.getElementById(id)?.value || '').trim();
   const next = value('pwNew');
-  if (next.length < 8) { toast('Mot de passe trop court (8 caractères minimum)'); return; }
+  if (next.length < 12) { toast('Mot de passe trop court (12 caractères minimum)'); return; }
   if (next !== value('pwConfirm')) { toast('Les deux mots de passe ne correspondent pas'); return; }
   const { error } = await sb.auth.updateUser({ password: next });
   if (error) { toast('Mot de passe non changé : ' + error.message); return; }
@@ -1224,9 +1298,11 @@ async function submitPasswordChange(e) {
 }
 
 async function adminLogout() {
-  const { error } = await sb.auth.signOut();
-  // Une session déjà expirée côté serveur ne doit pas bloquer la déconnexion.
-  if (error) await sb.auth.signOut({ scope: 'local' });
+  stopAdminIdleWatch();
+  // « Verrouiller » ferme la session de cet onglet, sans déconnecter
+  // les autres appareils du vendeur.
+  const { error } = await sb.auth.signOut({ scope: 'local' });
+  if (error) console.warn('[FREE SPIRIT] Déconnexion locale incomplète', error.message);
   state.orders = [];
   await checkAdminGate();
 }
@@ -1329,6 +1405,18 @@ function renderAdminStats() {
 }
 
 /* ---------- COMMANDES ---------- */
+/* Les commandes viennent d'un visiteur non connecté : chaque champ affiché
+   est traité comme une donnée hostile, y compris la forme des articles. */
+function orderItemsHTML(rawItems) {
+  const items = Array.isArray(rawItems) ? rawItems : [];
+  const lines = items.map(item => {
+    if (!item || typeof item !== 'object') return '';
+    const qty = Math.max(0, Math.trunc(Number(item.qty)) || 0);
+    return `${escapeHtml(String(item.name ?? 'Article'))} (T.${escapeHtml(String(item.size ?? '-'))}) ×${qty}`;
+  }).filter(Boolean);
+  return lines.length ? lines.join('<br>') : 'Panier vide';
+}
+
 function renderAdminOrders() {
   const tbody = document.getElementById('adminOrdersBody');
   if (!tbody) return;
@@ -1346,13 +1434,13 @@ function renderAdminOrders() {
         <span class="t-name">${escapeHtml(o.customer || 'Invité')}</span>
         ${o.whatsapp ? `<br><small class="text-secondary"><i class="bi bi-whatsapp me-1"></i>${escapeHtml(o.whatsapp)}</small>` : '<br><small class="text-secondary">Numéro non renseigné</small>'}
       </td>
-      <td><small class="text-secondary">${o.items.map(i => `${escapeHtml(i.name)} (T.${escapeHtml(i.size)}) ×${i.qty}`).join('<br>')}</small></td>
+      <td><small class="text-secondary">${orderItemsHTML(o.items)}</small></td>
       <td>
         <span class="fw-bold">${fmt(o.total)}</span>
         ${o.promoCode ? `<br><small class="red-text">Code ${escapeHtml(o.promoCode)}</small>` : ''}
       </td>
       <td class="text-nowrap">
-        <button class="icon-action danger" title="Supprimer" onclick="deleteOrder('${o.id}')"><i class="bi bi-trash3"></i></button>
+        <button class="icon-action danger" title="Supprimer" onclick="deleteOrder(${jsArg(o.id)})"><i class="bi bi-trash3"></i></button>
       </td>
     </tr>`).join('');
 }
@@ -1385,15 +1473,15 @@ function renderAdminProducts() {
     <tr>
       <td><img class="thumb" src="${escapeHtml(p.image)}" alt=""></td>
       <td><span class="t-name">${escapeHtml(p.name)}</span></td>
-      <td>${CATEGORIES[p.category] || escapeHtml(p.category)}</td>
+      <td>${CATEGORY_LABEL(p.category)}</td>
       <td>
         <span class="fw-bold">${fmt(p.price)}</span>
         ${p.oldPrice ? `<br><small class="text-secondary text-decoration-line-through">${fmt(p.oldPrice)}</small>` : ''}
       </td>
       <td><small class="text-secondary">${(p.sizes || []).map(escapeHtml).join(', ')}</small></td>
       <td class="text-nowrap">
-        <button class="icon-action me-1" title="Modifier" onclick="openProductForm('${p.id}')"><i class="bi bi-pencil"></i></button>
-        <button class="icon-action danger" title="Supprimer" onclick="deleteProduct('${p.id}')"><i class="bi bi-trash3"></i></button>
+        <button class="icon-action me-1" title="Modifier" onclick="openProductForm(${jsArg(p.id)})"><i class="bi bi-pencil"></i></button>
+        <button class="icon-action danger" title="Supprimer" onclick="deleteProduct(${jsArg(p.id)})"><i class="bi bi-trash3"></i></button>
       </td>
     </tr>`).join('');
 }
@@ -1536,12 +1624,12 @@ function renderAdminPromos() {
   tbody.innerHTML = state.promos.map(p => `
     <tr>
       <td><span class="t-name chrome-text">${escapeHtml(p.code)}</span></td>
-      <td>${p.type === 'percent' ? `Réduction <b>-${p.value}%</b>` : `Montant fixe <b>-${fmt(p.value)}</b>`}</td>
+      <td>${p.type === 'percent' ? `Réduction <b>-${escapeHtml(String(p.value))}%</b>` : `Montant fixe <b>-${fmt(p.value)}</b>`}</td>
       <td><span class="status-pill ${p.active ? 'on' : 'off'}">${p.active ? 'Actif' : 'Inactif'}</span></td>
       <td class="text-nowrap">
-        <button class="icon-action me-1" title="Modifier" onclick="openPromoForm('${p.id}')"><i class="bi bi-pencil"></i></button>
-        <button class="icon-action ${p.active ? '' : ''} me-1" title="${p.active ? 'Désactiver' : 'Activer'}" onclick="togglePromo('${p.id}')"><i class="bi bi-${p.active ? 'pause' : 'play'}"></i></button>
-        <button class="icon-action danger" title="Supprimer" onclick="deletePromo('${p.id}')"><i class="bi bi-trash3"></i></button>
+        <button class="icon-action me-1" title="Modifier" onclick="openPromoForm(${jsArg(p.id)})"><i class="bi bi-pencil"></i></button>
+        <button class="icon-action ${p.active ? '' : ''} me-1" title="${p.active ? 'Désactiver' : 'Activer'}" onclick="togglePromo(${jsArg(p.id)})"><i class="bi bi-${p.active ? 'pause' : 'play'}"></i></button>
+        <button class="icon-action danger" title="Supprimer" onclick="deletePromo(${jsArg(p.id)})"><i class="bi bi-trash3"></i></button>
       </td>
     </tr>`).join('');
 }
@@ -1657,8 +1745,8 @@ function renderAdminReviews() {
       <td><small class="text-secondary">${escapeHtml(r.comment || 'Aucun commentaire')}</small><br><small class="text-secondary">${new Date(r.date).toLocaleDateString('fr-FR')}</small></td>
       <td><span class="status-pill ${published ? 'on' : 'off'}">${published ? 'Publié' : 'En attente'}</span></td>
       <td class="text-nowrap">
-        <button class="icon-action me-1" title="${published ? 'Retirer de la boutique' : 'Publier sur la boutique'}" onclick="toggleReview('${r.id}')"><i class="bi bi-${published ? 'eye-slash' : 'check2'}"></i></button>
-        <button class="icon-action danger" title="Supprimer" onclick="deleteReview('${r.id}')"><i class="bi bi-trash3"></i></button>
+        <button class="icon-action me-1" title="${published ? 'Retirer de la boutique' : 'Publier sur la boutique'}" onclick="toggleReview(${jsArg(r.id)})"><i class="bi bi-${published ? 'eye-slash' : 'check2'}"></i></button>
+        <button class="icon-action danger" title="Supprimer" onclick="deleteReview(${jsArg(r.id)})"><i class="bi bi-trash3"></i></button>
       </td>
     </tr>`;
   }).join('');
@@ -1756,8 +1844,8 @@ function renderAdminReels() {
       </td>
       <td><small class="text-secondary">${r.link ? escapeHtml(r.linkLabel || 'Voir la vidéo') : 'Aucune redirection'}</small></td>
       <td class="text-nowrap">
-        <button class="icon-action me-1" title="Modifier" onclick="openReelForm('${r.id}')"><i class="bi bi-pencil"></i></button>
-        <button class="icon-action danger" title="Supprimer" onclick="deleteReel('${r.id}')"><i class="bi bi-trash3"></i></button>
+        <button class="icon-action me-1" title="Modifier" onclick="openReelForm(${jsArg(r.id)})"><i class="bi bi-pencil"></i></button>
+        <button class="icon-action danger" title="Supprimer" onclick="deleteReel(${jsArg(r.id)})"><i class="bi bi-trash3"></i></button>
       </td>
     </tr>`).join('');
 }

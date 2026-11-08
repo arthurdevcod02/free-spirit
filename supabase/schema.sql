@@ -96,6 +96,14 @@ create table if not exists public.settings (
   "updatedAt" timestamptz not null default now()
 );
 
+-- Qui a le droit d'administrer la boutique. Cette liste est la seule
+-- autorité : un compte connecté qui n'y figure pas ne peut rien écrire.
+create table if not exists public.admins (
+  user_id     uuid primary key references auth.users (id) on delete cascade,
+  note        text not null default '',
+  "createdAt" timestamptz not null default now()
+);
+
 
 -- ============================================================
 --  2. SÉCURITÉ (Row Level Security)
@@ -115,67 +123,117 @@ alter table public.orders   enable row level security;
 alter table public.reviews  enable row level security;
 alter table public.reels    enable row level security;
 alter table public.settings enable row level security;
+alter table public.admins   enable row level security;
 
--- ---- Catalogue : tout le monde lit, toi seul écris ----
+-- La table admins n'a volontairement aucune politique : personne ne la lit
+-- ni ne l'écrit directement. Seule la fonction ci-dessous la consulte.
+revoke all on table public.admins from anon, authenticated;
+
+-- Seule autorité des droits d'écriture. SECURITY DEFINER : la fonction lit
+-- la liste même si l'appelant n'a aucun droit sur la table.
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1 from public.admins a where a.user_id = auth.uid()
+  );
+$$;
+
+revoke all on function public.is_admin() from public;
+grant execute on function public.is_admin() to authenticated;
+
+-- ---- Catalogue : tout le monde lit, seul un admin écrit ----
 drop policy if exists "produits_lecture_publique" on public.products;
 create policy "produits_lecture_publique" on public.products
   for select to anon, authenticated using (true);
 
 drop policy if exists "produits_gestion_admin" on public.products;
 create policy "produits_gestion_admin" on public.products
-  for all to authenticated using (true) with check (true);
+  for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
 
 -- ---- Codes promo : tout le monde lit (le panier doit pouvoir
---      les vérifier), toi seul écris ----
+--      les vérifier), seul un admin écrit ----
 drop policy if exists "promos_lecture_publique" on public.promos;
 create policy "promos_lecture_publique" on public.promos
   for select to anon, authenticated using (true);
 
 drop policy if exists "promos_gestion_admin" on public.promos;
 create policy "promos_gestion_admin" on public.promos
-  for all to authenticated using (true) with check (true);
+  for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
 
--- ---- Coordonnées boutique : tout le monde lit, toi seul écris ----
+-- ---- Coordonnées boutique : tout le monde lit, seul un admin écrit ----
 drop policy if exists "settings_lecture_publique" on public.settings;
 create policy "settings_lecture_publique" on public.settings
   for select to anon, authenticated using (true);
 
 drop policy if exists "settings_gestion_admin" on public.settings;
 create policy "settings_gestion_admin" on public.settings
-  for all to authenticated using (true) with check (true);
+  for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
 
--- ---- Vidéos 9:16 : tout le monde lit, toi seul écris ----
+-- ---- Vidéos 9:16 : tout le monde lit, seul un admin écrit ----
 drop policy if exists "reels_lecture_publique" on public.reels;
 create policy "reels_lecture_publique" on public.reels
   for select to anon, authenticated using (true);
 
 drop policy if exists "reels_gestion_admin" on public.reels;
 create policy "reels_gestion_admin" on public.reels
-  for all to authenticated using (true) with check (true);
+  for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
 
--- ---- Avis clients : un visiteur ne voit que les avis que tu as
---      approuvés, et ne peut jamais publier le sien tout seul ----
+-- ---- Avis clients : un visiteur ne voit que les avis approuvés,
+--      ne peut déposer qu'un avis en attente et non vérifié ----
 drop policy if exists "avis_lecture_publique" on public.reviews;
 create policy "avis_lecture_publique" on public.reviews
   for select to anon using (status = 'approved');
 
 drop policy if exists "avis_insertion_visiteur" on public.reviews;
 create policy "avis_insertion_visiteur" on public.reviews
-  for insert to anon with check (status = 'pending' and verified = false);
+  for insert to anon
+  with check (
+    status = 'pending'
+    and verified = false
+    and rating between 1 and 5
+    and char_length(author) between 1 and 80
+    and char_length(comment) <= 1200
+  );
 
 drop policy if exists "avis_gestion_admin" on public.reviews;
 create policy "avis_gestion_admin" on public.reviews
-  for all to authenticated using (true) with check (true);
+  for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
 
--- ---- Commandes : un visiteur peut en déposer une, mais personne
---      ne peut lire celles des autres. Toi seul y as accès. ----
+-- ---- Commandes : un visiteur peut en déposer une seule, cohérente,
+--      et personne ne lit celles des autres. Seul un admin y accède. ----
 drop policy if exists "commandes_insertion_visiteur" on public.orders;
 create policy "commandes_insertion_visiteur" on public.orders
-  for insert to anon, authenticated with check (true);
+  for insert to anon, authenticated
+  with check (
+    char_length(id) between 4 and 40
+    and subtotal >= 0
+    and discount >= 0
+    and total >= 0
+    and discount <= subtotal
+    and total = subtotal - discount
+    and jsonb_typeof(items) = 'array'
+    and jsonb_array_length(items) between 1 and 50
+    and char_length(customer) between 1 and 120
+    and char_length(coalesce(whatsapp, '')) <= 40
+    and ("promoCode" is null or char_length("promoCode") <= 32)
+    and "date" > now() - interval '1 day'
+    and "date" < now() + interval '1 day'
+  );
 
 drop policy if exists "commandes_gestion_admin" on public.orders;
 create policy "commandes_gestion_admin" on public.orders
-  for all to authenticated using (true) with check (true);
+  for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
 
 
 -- ============================================================
@@ -195,11 +253,25 @@ create policy "media_lecture_publique" on storage.objects
 drop policy if exists "media_gestion_admin" on storage.objects;
 create policy "media_gestion_admin" on storage.objects
   for all to authenticated
-  using (bucket_id = 'media') with check (bucket_id = 'media');
+  using (bucket_id = 'media' and public.is_admin())
+  with check (bucket_id = 'media' and public.is_admin());
 
 
 -- ============================================================
---  4. VÉRIFICATION — ce que tu dois voir après RUN
+--  4. COMPTE ADMINISTRATEUR
+--  Remplacez l'adresse si le compte vendeur change. Le compte
+--  doit déjà exister dans Supabase > Authentication.
+-- ============================================================
+
+insert into public.admins (user_id, note)
+select id, 'Compte vendeur Free Spirit'
+from auth.users
+where lower(email) = lower('marcomiller517@gmail.com')
+on conflict (user_id) do nothing;
+
+
+-- ============================================================
+--  5. VÉRIFICATION — ce que tu dois voir après RUN
 -- ============================================================
 
 select 'products' as nom, count(*) as lignes from public.products
@@ -208,4 +280,5 @@ union all select 'orders',   count(*) from public.orders
 union all select 'reviews',  count(*) from public.reviews
 union all select 'reels',    count(*) from public.reels
 union all select 'settings', count(*) from public.settings
+union all select 'admins',   count(*) from public.admins
 order by nom;
