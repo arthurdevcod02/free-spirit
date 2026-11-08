@@ -1272,9 +1272,12 @@ async function submitAdminLogin(e) {
 
   if (error) {
     console.error('[FREE SPIRIT] Connexion refusée', error);
-    toast(/invalid login credentials|email not confirmed/i.test(error.message)
-      ? 'Email ou mot de passe incorrect'
-      : 'Connexion impossible, réessayez dans un instant');
+    const rateLimited = error.status === 429 || /too many requests|rate limit/i.test(error.message);
+    toast(rateLimited
+      ? 'Trop de tentatives. Réessayez dans quelques minutes.'
+      : /invalid login credentials|email not confirmed/i.test(error.message)
+        ? 'Email ou mot de passe incorrect'
+        : 'Connexion impossible, réessayez dans un instant');
     passwordInput.classList.add('is-invalid');
     setTimeout(() => passwordInput.classList.remove('is-invalid'), 1500);
     return;
